@@ -238,7 +238,7 @@ function mirrorPattern(pattern) {
 function buildUrl(pattern, balls) {
   const bps   = balls === 5 ? 12  : 10;
   const dwell = balls === 5 ? 1.5 : 0.5;
-  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors={109,50,168};redirect=true`;
+  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors={109,50,168};fps=50;redirect=true`;
 }
 
 // ----- Randomize -----
