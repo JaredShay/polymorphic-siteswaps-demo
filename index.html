@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poly Randomizer</title>
+<link rel="icon" href="favicons/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="favicons/favicon.svg">
+<link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32.png">
+<link rel="apple-touch-icon" href="favicons/apple-touch-icon.png">
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 12px;
+    box-sizing: border-box;
+  }
+  #stage {
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  #gif { max-width: 100%; max-height: 100%; display: block; }
+  #status {
+    position: absolute;
+    font-size: 13px;
+    color: #bbb;
+    letter-spacing: 0.02em;
+  }
+  #pattern {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #888;
+    word-break: break-all;
+    text-align: center;
+    max-width: 480px;
+    min-height: 1.2em;
+  }
+  #filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .filter-label {
+    font-size: 13px;
+    color: #888;
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border: 1.5px solid #444;
+    border-radius: 6px;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .toggle.on {
+    background: #6d32a8;
+    border-color: #6d32a8;
+    color: #fff;
+  }
+  .toggle:hover { border-color: #7d3cc0; }
+  #randomize-btn {
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #6d32a8;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  #randomize-btn:hover { background: #7d3cc0; }
+  #randomize-btn:disabled { opacity: 0.6; cursor: default; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <span id="status">Loading…</span>
+  <img id="gif" alt="Juggling pattern animation" referrerpolicy="no-referrer" style="display:none">
+</div>
+<div id="pattern"></div>
+
+<div id="filters">
+  <div class="filter-row">
+    <span class="filter-label">Balls</span>
+    <div class="toggle-group">
+      <button class="toggle on" data-group="balls" data-value="4">4</button>
+      <button class="toggle on" data-group="balls" data-value="5">5</button>
+    </div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Polyrhythm</span>
+    <div class="toggle-group">
+      <button class="toggle on" data-group="rhythm" data-value="strict">Strict</button>
+      <button class="toggle on" data-group="rhythm" data-value="free">Free</button>
+    </div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">State</span>
+    <div class="toggle-group">
+      <button class="toggle on" data-group="state" data-value="active">Active</button>
+      <button class="toggle on" data-group="state" data-value="ground">Ground</button>
+    </div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Run symmetrical</span>
+    <div class="toggle-group">
+      <button class="toggle" id="sym-toggle">On</button>
+    </div>
+  </div>
+</div>
+
+<button id="randomize-btn">Randomize</button>
+
+<script>
+const FAMILIES = ['3over2', '4over3'];
+
+const filters = {
+  balls:       new Set(['4', '5']),
+  rhythm:      new Set(['strict', 'free']),
+  state:       new Set(['active', 'ground']),
+  symmetrical: false,
+};
+
+const cache = {};
+
+const gif       = document.getElementById('gif');
+const statusEl  = document.getElementById('status');
+const patternEl = document.getElementById('pattern');
+const randBtn   = document.getElementById('randomize-btn');
+
+// ----- Filter toggle handling -----
+
+document.querySelectorAll('.toggle[data-group]').forEach(el => {
+  el.addEventListener('click', () => {
+    const group = el.dataset.group;
+    const value = el.dataset.value;
+
+    if (group === 'sym') {
+      filters.symmetrical = !filters.symmetrical;
+      el.classList.toggle('on', filters.symmetrical);
+      return;
+    }
+
+    const set = filters[group];
+    if (set.has(value)) {
+      if (set.size === 1) return; // always keep at least one selected
+      set.delete(value);
+      el.classList.remove('on');
+    } else {
+      set.add(value);
+      el.classList.add('on');
+    }
+  });
+});
+
+// ----- Data loading -----
+
+function dataKey(balls, family, mode, state) {
+  return `data/${balls}b_${family}_${mode}_${state}.json`;
+}
+
+async function loadPatterns() {
+  const keys = [];
+  for (const b of filters.balls) {
+    for (const family of FAMILIES) {
+      for (const mode of filters.rhythm) {
+        for (const s of filters.state) {
+          keys.push({ key: dataKey(b, family, mode, s), balls: parseInt(b) });
+        }
+      }
+    }
+  }
+
+  await Promise.all(
+    keys
+      .filter(({ key }) => cache[key] === undefined)
+      .map(async ({ key }) => {
+        try {
+          const resp = await fetch(key);
+          cache[key] = resp.ok ? await resp.json() : [];
+        } catch {
+          cache[key] = [];
+        }
+      })
+  );
+
+  const pool = [];
+  for (const { key, balls } of keys) {
+    for (const pattern of (cache[key] || [])) {
+      pool.push({ pattern, balls });
+    }
+  }
+  return pool;
+}
+
+// ----- Pattern helpers -----
+
+function mirrorPattern(pattern) {
+  return pattern.replace(/\(([^,)]+),([^)]+)\)/g, '($2,$1)');
+}
+
+function buildUrl(pattern, balls) {
+  const bps   = balls === 5 ? 14  : 10;
+  const dwell = balls === 5 ? 1.5 : 0.5;
+  const color = balls === 5 ? '{252,173,3}' : '{109,50,168}';
+  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors=${color};redirect=true`;
+}
+
+// ----- Randomize -----
+
+async function randomize() {
+  randBtn.disabled = true;
+  gif.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Loading…';
+
+  let pool;
+  try {
+    pool = await loadPatterns();
+  } catch {
+    statusEl.textContent = 'Failed to load patterns';
+    randBtn.disabled = false;
+    return;
+  }
+
+  if (pool.length === 0) {
+    statusEl.textContent = 'No patterns match current filters';
+    randBtn.disabled = false;
+    return;
+  }
+
+  const { pattern: base, balls } = pool[Math.floor(Math.random() * pool.length)];
+  const pattern = filters.symmetrical ? base + mirrorPattern(base) : base;
+
+  patternEl.textContent = pattern;
+  statusEl.textContent = 'Rendering…';
+
+  const url = buildUrl(pattern, balls);
+  const probe = new Image();
+  probe.referrerPolicy = 'no-referrer';
+  probe.onload = () => {
+    gif.src = url;
+    gif.style.display = 'block';
+    statusEl.style.display = 'none';
+    randBtn.disabled = false;
+  };
+  probe.onerror = () => {
+    statusEl.textContent = 'Render failed — try again';
+    randBtn.disabled = false;
+  };
+  probe.src = url;
+}
+
+randBtn.addEventListener('click', randomize);
+randomize();
+</script>
+</body>
+</html>
