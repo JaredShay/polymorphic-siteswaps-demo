@@ -120,6 +120,13 @@
   <div class="filter-row">
     <span class="filter-label">Polyrhythm</span>
     <div class="toggle-group">
+      <button class="toggle on" data-group="family" data-value="3over2">3 over 2</button>
+      <button class="toggle on" data-group="family" data-value="4over3">4 over 3</button>
+    </div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Rhythm</span>
+    <div class="toggle-group">
       <button class="toggle on" data-group="rhythm" data-value="strict">Strict</button>
       <button class="toggle on" data-group="rhythm" data-value="free">Free</button>
     </div>
@@ -134,7 +141,7 @@
   <div class="filter-row">
     <span class="filter-label">Run symmetrical</span>
     <div class="toggle-group">
-      <button class="toggle" id="sym-toggle">On</button>
+      <button class="toggle" data-group="sym" data-value="sym">On</button>
     </div>
   </div>
 </div>
@@ -142,10 +149,9 @@
 <button id="randomize-btn">Randomize</button>
 
 <script>
-const FAMILIES = ['3over2', '4over3'];
-
 const filters = {
   balls:       new Set(['4', '5']),
+  family:      new Set(['3over2', '4over3']),
   rhythm:      new Set(['strict', 'free']),
   state:       new Set(['active', 'ground']),
   symmetrical: false,
@@ -192,7 +198,7 @@ function dataKey(balls, family, mode, state) {
 async function loadPatterns() {
   const keys = [];
   for (const b of filters.balls) {
-    for (const family of FAMILIES) {
+    for (const family of filters.family) {
       for (const mode of filters.rhythm) {
         for (const s of filters.state) {
           keys.push({ key: dataKey(b, family, mode, s), balls: parseInt(b) });
@@ -230,10 +236,9 @@ function mirrorPattern(pattern) {
 }
 
 function buildUrl(pattern, balls) {
-  const bps   = balls === 5 ? 14  : 10;
+  const bps   = balls === 5 ? 12  : 10;
   const dwell = balls === 5 ? 1.5 : 0.5;
-  const color = balls === 5 ? '{252,173,3}' : '{109,50,168}';
-  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors=${color};redirect=true`;
+  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors={109,50,168};redirect=true`;
 }
 
 // ----- Randomize -----
