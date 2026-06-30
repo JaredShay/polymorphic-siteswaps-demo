@@ -85,7 +85,8 @@
     border-color: #6d32a8;
     color: #fff;
   }
-  .toggle:hover { border-color: #7d3cc0; }
+  .toggle:hover:not(:disabled) { border-color: #7d3cc0; }
+  .toggle:disabled { opacity: 0.35; cursor: default; }
   #randomize-btn {
     font-size: 15px;
     font-weight: 500;
@@ -163,8 +164,20 @@ const gif       = document.getElementById('gif');
 const statusEl  = document.getElementById('status');
 const patternEl = document.getElementById('pattern');
 const randBtn   = document.getElementById('randomize-btn');
+const symToggle = document.querySelector('.toggle[data-group="sym"]');
 
 // ----- Filter toggle handling -----
+
+function updateSymToggle() {
+  const blocked = filters.state.has('active');
+  if (blocked) {
+    filters.symmetrical = false;
+    symToggle.classList.remove('on');
+    symToggle.disabled = true;
+  } else {
+    symToggle.disabled = false;
+  }
+}
 
 document.querySelectorAll('.toggle[data-group]').forEach(el => {
   el.addEventListener('click', () => {
@@ -186,8 +199,12 @@ document.querySelectorAll('.toggle[data-group]').forEach(el => {
       set.add(value);
       el.classList.add('on');
     }
+
+    if (group === 'state') updateSymToggle();
   });
 });
+
+updateSymToggle();
 
 // ----- Data loading -----
 
