@@ -68,6 +68,7 @@ class PolymorphicSiteswaps
 
   def initialize(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, debug: false)
     raise ArgumentError, "throw values must be even" if throws.any?(&:odd?)
+    raise ArgumentError, "throw values must be ≤ 35 (single base-36 char)" if throws.any? { |v| v > 35 }
     @period          = period
     @left_beats      = left_beats
     @right_beats     = right_beats

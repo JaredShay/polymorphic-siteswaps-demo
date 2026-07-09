@@ -9,8 +9,9 @@ CONFIGS = [
   { balls: 5, family: '5over2', method: :five_over_two,   throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
   { balls: 4, family: '5over3', method: :five_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
   { balls: 5, family: '5over3', method: :five_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
-  { balls: 4, family: '5over4', method: :five_over_four,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40] },
-  { balls: 5, family: '5over4', method: :five_over_four,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40] },
+  # JugglingLab uses single base-36 chars (0–z = 0–35); cap throws at 34 (highest even value ≤ 35).
+  { balls: 4, family: '5over4', method: :five_over_four,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
+  { balls: 5, family: '5over4', method: :five_over_four,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
 ].freeze
 
 SAMPLE_LIMIT = 200
