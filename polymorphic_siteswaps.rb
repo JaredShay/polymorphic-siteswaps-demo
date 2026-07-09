@@ -17,12 +17,42 @@ class PolymorphicSiteswaps
     right_beats: [0, 3, 6, 9],
   }.freeze
 
+  FIVE_OVER_TWO_SPEC = {
+    period:      10,
+    left_beats:  [0, 5],
+    right_beats: [0, 2, 4, 6, 8],
+  }.freeze
+
+  FIVE_OVER_THREE_SPEC = {
+    period:      15,
+    left_beats:  [0, 5, 10],
+    right_beats: [0, 3, 6, 9, 12],
+  }.freeze
+
+  FIVE_OVER_FOUR_SPEC = {
+    period:      20,
+    left_beats:  [0, 5, 10, 15],
+    right_beats: [0, 4, 8, 12, 16],
+  }.freeze
+
   def self.three_over_two(number_of_balls:, throws:, debug: false)
     generate(**THREE_OVER_TWO_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
   end
 
   def self.four_over_three(number_of_balls:, throws:, debug: false)
     generate(**FOUR_OVER_THREE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
+  end
+
+  def self.five_over_two(number_of_balls:, throws:, debug: false)
+    generate(**FIVE_OVER_TWO_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
+  end
+
+  def self.five_over_three(number_of_balls:, throws:, debug: false)
+    generate(**FIVE_OVER_THREE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
+  end
+
+  def self.five_over_four(number_of_balls:, throws:, debug: false)
+    generate(**FIVE_OVER_FOUR_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
   end
 
   def self.generate(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, debug: false)

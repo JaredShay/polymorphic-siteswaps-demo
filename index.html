@@ -35,13 +35,13 @@
     position: relative;
   }
   #gif {
-    /* Clip JugglingLab chrome: shift left to hide left sidebar, up to hide top bar,
-       and extend width/height so the animation stays centred under overflow:hidden. */
+    /* Clip JugglingLab chrome: shift left to hide left sidebar and right chrome.
+       Height is left uncropped so full throw arcs are visible. */
     position: absolute;
     left: -80px;
-    top: -30px;
+    top: 0;
     width: calc(100% + 140px); /* 80px left sidebar + 60px right chrome */
-    height: calc(100% + 30px);
+    height: 100%;
     border: none;
   }
   #status {
@@ -180,6 +180,9 @@
     <div class="toggle-group">
       <button class="toggle on" data-group="family" data-value="3over2">3 over 2</button>
       <button class="toggle on" data-group="family" data-value="4over3">4 over 3</button>
+      <button class="toggle on" data-group="family" data-value="5over2">5 over 2</button>
+      <button class="toggle on" data-group="family" data-value="5over3">5 over 3</button>
+      <button class="toggle on" data-group="family" data-value="5over4">5 over 4</button>
     </div>
   </div>
   <div class="filter-row">
@@ -204,13 +207,25 @@
     <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=active">4b · 4/3 · Active</a>
     <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=ground">5b · 4/3 · Ground</a>
     <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=active">5b · 4/3 · Active</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=ground">4b · 5/2 · Ground</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=active">4b · 5/2 · Active</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=ground">5b · 5/2 · Ground</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=active">5b · 5/2 · Active</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=ground">4b · 5/3 · Ground</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=active">4b · 5/3 · Active</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=ground">5b · 5/3 · Ground</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=active">5b · 5/3 · Active</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=ground">4b · 5/4 · Ground</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=active">4b · 5/4 · Active</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=ground">5b · 5/4 · Ground</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=active">5b · 5/4 · Active</a>
   </div>
 </div>
 
 <script>
 const filters = {
   balls:  new Set(['4', '5']),
-  family: new Set(['3over2', '4over3']),
+  family: new Set(['3over2', '4over3', '5over2', '5over3', '5over4']),
   state:  new Set(['active', 'ground']),
 };
 
@@ -253,14 +268,15 @@ document.querySelectorAll('.toggle[data-group]').forEach(el => {
 
 function updateUrl() {
   if (!current) return;
-  const params = new URLSearchParams();
-  params.set('p',   current.base);
-  params.set('b',   String(current.balls));
-  params.set('f',   current.family);
-  params.set('fb', [...filters.balls].join(','));
-  params.set('ff', [...filters.family].join(','));
-  params.set('fs', [...filters.state].join(','));
-  history.pushState(null, '', '?' + params.toString());
+  const qs = [
+    `p=${current.base}`,
+    `b=${current.balls}`,
+    `f=${current.family}`,
+    `fb=${[...filters.balls].join(',')}`,
+    `ff=${[...filters.family].join(',')}`,
+    `fs=${[...filters.state].join(',')}`,
+  ].join('&');
+  history.pushState(null, '', '?' + qs);
 }
 
 function readUrlParams() {
@@ -297,7 +313,7 @@ async function loadPatterns() {
       .map(async ({ key }) => {
         try {
           const resp = await fetch(key);
-          cache[key] = resp.ok ? (await resp.text()).split('\n').filter(Boolean) : [];
+          cache[key] = resp.ok ? (await resp.text()).split('\n').filter(l => l && !l.startsWith('#')) : [];
         } catch {
           cache[key] = [];
         }
@@ -316,7 +332,7 @@ async function loadPatterns() {
 // ----- Pattern helpers -----
 
 function buildUrl(pattern, family) {
-  const bps = family === '4over3' ? 15 : 10;
+  const bps = { '3over2': 10, '4over3': 15, '5over2': 10, '5over3': 12, '5over4': 15 }[family] ?? 10;
   return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 
