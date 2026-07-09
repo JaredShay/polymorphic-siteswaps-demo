@@ -126,13 +126,6 @@
     </div>
   </div>
   <div class="filter-row">
-    <span class="filter-label">Rhythm</span>
-    <div class="toggle-group">
-      <button class="toggle on" data-group="rhythm" data-value="strict">Strict</button>
-      <button class="toggle on" data-group="rhythm" data-value="free">Free</button>
-    </div>
-  </div>
-  <div class="filter-row">
     <span class="filter-label">State</span>
     <div class="toggle-group">
       <button class="toggle on" data-group="state" data-value="active">Active</button>
@@ -153,7 +146,6 @@
 const filters = {
   balls:       new Set(['4', '5']),
   family:      new Set(['3over2', '4over3']),
-  rhythm:      new Set(['strict', 'free']),
   state:       new Set(['active', 'ground']),
   symmetrical: false,
 };
@@ -208,18 +200,16 @@ updateSymToggle();
 
 // ----- Data loading -----
 
-function dataKey(balls, family, mode, state) {
-  return `data/${balls}b_${family}_${mode}_${state}.json`;
+function dataKey(balls, family, state) {
+  return `data/${balls}b_${family}_${state}.txt`;
 }
 
 async function loadPatterns() {
   const keys = [];
   for (const b of filters.balls) {
     for (const family of filters.family) {
-      for (const mode of filters.rhythm) {
-        for (const s of filters.state) {
-          keys.push({ key: dataKey(b, family, mode, s), balls: parseInt(b) });
-        }
+      for (const s of filters.state) {
+        keys.push({ key: dataKey(b, family, s), balls: parseInt(b) });
       }
     }
   }
@@ -230,7 +220,7 @@ async function loadPatterns() {
       .map(async ({ key }) => {
         try {
           const resp = await fetch(key);
-          cache[key] = resp.ok ? await resp.json() : [];
+          cache[key] = resp.ok ? (await resp.text()).split('\n').filter(Boolean) : [];
         } catch {
           cache[key] = [];
         }
