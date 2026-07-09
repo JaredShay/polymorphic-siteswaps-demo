@@ -293,7 +293,9 @@ async function randomize() {
     randBtn.disabled = false;
   };
   probe.onerror = (e) => {
-    console.error('[poly] probe failed', e);
+    fetch(url, { method: 'HEAD', mode: 'no-cors' })
+      .then(r => console.error('[poly] probe failed — fetch status:', r.status, r.type, e))
+      .catch(err => console.error('[poly] probe failed — fetch error:', err, e));
     statusEl.textContent = 'Render failed — try again';
     randBtn.disabled = false;
   };
