@@ -135,18 +135,23 @@ class PolymorphicSiteswaps
     remaining  = slots.size - k - 1
 
     # --- Direct landing at an active slot ---
-    (0...period).each do |lb|
-      (0..1).each do |lh|
-        next if holes[lb][lh].zero?
-        diff  = (lb - beat + period) % period
-        v     = diff.zero? ? 2 * period : 2 * diff
-        next unless throw_set.include?(v)
-        cross = lh != hand
+    #
+    # Iterate over throw values rather than landing beats so that values exceeding
+    # 2*period are reachable. Two different values may land at the same slot
+    # (e.g. v=2 and v=14 in a period-6 pattern both land at beat+1); they are
+    # distinct throws — same timing, different height — and both are generated.
+    throws.each do |v|
+      next if v.zero?
+      [false, true].each do |cross|
         next if cross && !allow_crosses
         next if cross && v < 4  # too fast at juggling tempo
         # No transit check here: for direct active-to-active crosses the landing IS
         # a catching-hand slot, so high-value crosses (8x, 12x…) naturally allow
         # catching-hand throws during transit — that's expected juggling behaviour.
+        lh = cross ? hand ^ 1 : hand
+        lb = (beat + v / 2) % period
+        next if holes[lb][lh].zero?
+
         new_sum = sum + v
         next if new_sum > target
         next if new_sum + remaining * throws.max < target

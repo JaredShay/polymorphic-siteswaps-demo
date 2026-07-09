@@ -209,7 +209,7 @@ async function loadPatterns() {
   for (const b of filters.balls) {
     for (const family of filters.family) {
       for (const s of filters.state) {
-        keys.push({ key: dataKey(b, family, s), balls: parseInt(b) });
+        keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family });
       }
     }
   }
@@ -228,9 +228,9 @@ async function loadPatterns() {
   );
 
   const pool = [];
-  for (const { key, balls } of keys) {
+  for (const { key, balls, family } of keys) {
     for (const pattern of (cache[key] || [])) {
-      pool.push({ pattern, balls });
+      pool.push({ pattern, balls, family });
     }
   }
   return pool;
@@ -242,10 +242,9 @@ function mirrorPattern(pattern) {
   return pattern.replace(/\(([^,)]+),([^)]+)\)/g, '($2,$1)');
 }
 
-function buildUrl(pattern, balls) {
-  const bps   = balls === 5 ? 12  : 10;
-  const dwell = balls === 5 ? 1.5 : 0.5;
-  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=${dwell};colors={109,50,168};fps=50;redirect=true`;
+function buildUrl(pattern, family) {
+  const bps = family === '4over3' ? 15 : 10;
+  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50;redirect=true`;
 }
 
 // ----- Randomize -----
@@ -266,27 +265,35 @@ async function randomize() {
   }
 
   if (pool.length === 0) {
+    console.warn('[poly] no patterns matched filters', Object.fromEntries(
+      Object.entries(filters).map(([k, v]) => [k, v instanceof Set ? [...v] : v])
+    ));
     statusEl.textContent = 'No patterns match current filters';
     randBtn.disabled = false;
     return;
   }
 
-  const { pattern: base, balls } = pool[Math.floor(Math.random() * pool.length)];
+  const { pattern: base, balls, family } = pool[Math.floor(Math.random() * pool.length)];
   const pattern = filters.symmetrical ? base + mirrorPattern(base) : base;
+  console.log('[poly] pool size:', pool.length, '| selected:', { base, balls, family, pattern });
 
   patternEl.textContent = pattern;
   statusEl.textContent = 'Rendering…';
 
-  const url = buildUrl(pattern, balls);
+  const url = buildUrl(pattern, family);
+  console.log('[poly] url:', url);
+
   const probe = new Image();
   probe.referrerPolicy = 'no-referrer';
   probe.onload = () => {
+    console.log('[poly] probe loaded');
     gif.src = url;
     gif.style.display = 'block';
     statusEl.style.display = 'none';
     randBtn.disabled = false;
   };
-  probe.onerror = () => {
+  probe.onerror = (e) => {
+    console.error('[poly] probe failed', e);
     statusEl.textContent = 'Render failed — try again';
     randBtn.disabled = false;
   };
