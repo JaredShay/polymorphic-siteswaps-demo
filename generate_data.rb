@@ -1,10 +1,10 @@
 require_relative 'polymorphic_siteswaps'
 
 CONFIGS = [
-  { balls: 4, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 12, 14, 16, 18] },
-  { balls: 5, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 12, 14, 16, 18] },
-  { balls: 4, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 12, 14, 16, 18] },
-  { balls: 5, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 12, 14, 16, 18] },
+  { balls: 4, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 5, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 4, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 5, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
 ].freeze
 
 CONFIGS.each do |cfg|
