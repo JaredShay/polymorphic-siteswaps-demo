@@ -34,7 +34,16 @@
     overflow: hidden;
     position: relative;
   }
-  #gif { width: 100%; height: 100%; border: none; display: block; }
+  #gif {
+    /* Clip JugglingLab chrome: shift left to hide left sidebar, up to hide top bar,
+       and extend width/height so the animation stays centred under overflow:hidden. */
+    position: absolute;
+    left: -80px;
+    top: -30px;
+    width: calc(100% + 140px); /* 80px left sidebar + 60px right chrome */
+    height: calc(100% + 30px);
+    border: none;
+  }
   #status {
     position: absolute;
     font-size: 13px;
@@ -100,6 +109,50 @@
   }
   #randomize-btn:hover { background: #7d3cc0; }
   #randomize-btn:disabled { opacity: 0.6; cursor: default; }
+  #pattern-links {
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+  #juggling-lab-link {
+    font-size: 13px;
+    color: #6d32a8;
+    text-decoration: none;
+  }
+  #juggling-lab-link:hover { text-decoration: underline; }
+  #share-btn {
+    font-size: 13px;
+    padding: 4px 12px;
+    border: 1.5px solid #444;
+    border-radius: 6px;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    transition: border-color 0.12s, color 0.12s;
+  }
+  #share-btn:hover { border-color: #7d3cc0; color: #ccc; }
+  #browse {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .browse-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .browse-link {
+    font-size: 12px;
+    color: #888;
+    text-decoration: none;
+    padding: 4px 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    transition: border-color 0.12s, color 0.12s;
+  }
+  .browse-link:hover { border-color: #6d32a8; color: #ccc; }
 </style>
 </head>
 <body>
@@ -109,6 +162,10 @@
   <iframe id="gif" title="Juggling pattern animation" style="display:none"></iframe>
 </div>
 <div id="pattern"></div>
+<div id="pattern-links">
+  <a id="juggling-lab-link" href="#" target="_blank" rel="noopener">JugglingLab ↗</a>
+  <button id="share-btn">Copy link</button>
+</div>
 
 <div id="filters">
   <div class="filter-row">
@@ -132,71 +189,91 @@
       <button class="toggle on" data-group="state" data-value="ground">Ground</button>
     </div>
   </div>
-  <div class="filter-row">
-    <span class="filter-label">Run symmetrical</span>
-    <div class="toggle-group">
-      <button class="toggle" data-group="sym" data-value="sym">On</button>
-    </div>
-  </div>
 </div>
 
 <button id="randomize-btn">Randomize</button>
 
+<div id="browse">
+  <span class="filter-label">Browse patterns</span>
+  <div class="browse-links">
+    <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=ground">4b · 3/2 · Ground</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=active">4b · 3/2 · Active</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=ground">5b · 3/2 · Ground</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=active">5b · 3/2 · Active</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=ground">4b · 4/3 · Ground</a>
+    <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=active">4b · 4/3 · Active</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=ground">5b · 4/3 · Ground</a>
+    <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=active">5b · 4/3 · Active</a>
+  </div>
+</div>
+
 <script>
 const filters = {
-  balls:       new Set(['4', '5']),
-  family:      new Set(['3over2', '4over3']),
-  state:       new Set(['active', 'ground']),
-  symmetrical: false,
+  balls:  new Set(['4', '5']),
+  family: new Set(['3over2', '4over3']),
+  state:  new Set(['active', 'ground']),
 };
 
 const cache = {};
+let current = null; // { base, balls, family, pattern }
 
-const gif       = document.getElementById('gif');
-const statusEl  = document.getElementById('status');
-const patternEl = document.getElementById('pattern');
-const randBtn   = document.getElementById('randomize-btn');
-const symToggle = document.querySelector('.toggle[data-group="sym"]');
+const gif             = document.getElementById('gif');
+const statusEl        = document.getElementById('status');
+const patternEl       = document.getElementById('pattern');
+const randBtn         = document.getElementById('randomize-btn');
+const patternLinksEl  = document.getElementById('pattern-links');
+const jugglingLabLink = document.getElementById('juggling-lab-link');
+const shareBtn        = document.getElementById('share-btn');
 
 // ----- Filter toggle handling -----
 
-function updateSymToggle() {
-  const blocked = filters.state.has('active');
-  if (blocked) {
-    filters.symmetrical = false;
-    symToggle.classList.remove('on');
-    symToggle.disabled = true;
-  } else {
-    symToggle.disabled = false;
-  }
+function syncFilterButtons() {
+  document.querySelectorAll('.toggle[data-group]').forEach(el => {
+    const { group, value } = el.dataset;
+    el.classList.toggle('on', filters[group]?.has(value) ?? false);
+  });
 }
 
 document.querySelectorAll('.toggle[data-group]').forEach(el => {
   el.addEventListener('click', () => {
-    const group = el.dataset.group;
-    const value = el.dataset.value;
-
-    if (group === 'sym') {
-      filters.symmetrical = !filters.symmetrical;
-      el.classList.toggle('on', filters.symmetrical);
-      return;
-    }
-
+    const { group, value } = el.dataset;
     const set = filters[group];
     if (set.has(value)) {
-      if (set.size === 1) return; // always keep at least one selected
+      if (set.size === 1) return;
       set.delete(value);
       el.classList.remove('on');
     } else {
       set.add(value);
       el.classList.add('on');
     }
-
-    if (group === 'state') updateSymToggle();
   });
 });
 
-updateSymToggle();
+// ----- URL state -----
+
+function updateUrl() {
+  if (!current) return;
+  const params = new URLSearchParams();
+  params.set('p',   current.base);
+  params.set('b',   String(current.balls));
+  params.set('f',   current.family);
+  params.set('fb', [...filters.balls].join(','));
+  params.set('ff', [...filters.family].join(','));
+  params.set('fs', [...filters.state].join(','));
+  history.pushState(null, '', '?' + params.toString());
+}
+
+function readUrlParams() {
+  const params = new URLSearchParams(location.search);
+  if (params.has('fb')) filters.balls  = new Set(params.get('fb').split(','));
+  if (params.has('ff')) filters.family = new Set(params.get('ff').split(','));
+  if (params.has('fs')) filters.state  = new Set(params.get('fs').split(','));
+  syncFilterButtons();
+  if (params.has('p') && params.has('b') && params.has('f')) {
+    return { base: params.get('p'), balls: parseInt(params.get('b')), family: params.get('f') };
+  }
+  return null;
+}
 
 // ----- Data loading -----
 
@@ -238,14 +315,42 @@ async function loadPatterns() {
 
 // ----- Pattern helpers -----
 
-function mirrorPattern(pattern) {
-  return pattern.replace(/\(([^,)]+),([^)]+)\)/g, '($2,$1)');
-}
-
 function buildUrl(pattern, family) {
   const bps = family === '4over3' ? 15 : 10;
   return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
+
+// ----- Display pattern -----
+
+function displayPattern(base, balls, family) {
+  current = { base, balls, family };
+
+  patternEl.textContent = base;
+
+  const url = buildUrl(base, family);
+  jugglingLabLink.href = url;
+  patternLinksEl.style.display = 'flex';
+
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Rendering…';
+  gif.style.display = 'none';
+
+  gif.onload = () => {
+    gif.style.display = 'block';
+    statusEl.style.display = 'none';
+    randBtn.disabled = false;
+  };
+  gif.src = url;
+}
+
+// ----- Share -----
+
+shareBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(location.href).then(() => {
+    shareBtn.textContent = 'Copied!';
+    setTimeout(() => { shareBtn.textContent = 'Copy link'; }, 1500);
+  });
+});
 
 // ----- Randomize -----
 
@@ -265,35 +370,26 @@ async function randomize() {
   }
 
   if (pool.length === 0) {
-    console.warn('[poly] no patterns matched filters', Object.fromEntries(
-      Object.entries(filters).map(([k, v]) => [k, v instanceof Set ? [...v] : v])
-    ));
     statusEl.textContent = 'No patterns match current filters';
     randBtn.disabled = false;
     return;
   }
 
   const { pattern: base, balls, family } = pool[Math.floor(Math.random() * pool.length)];
-  const pattern = filters.symmetrical ? base + mirrorPattern(base) : base;
-  console.log('[poly] pool size:', pool.length, '| selected:', { base, balls, family, pattern });
-
-  patternEl.textContent = pattern;
-  statusEl.textContent = 'Rendering…';
-
-  const url = buildUrl(pattern, family);
-  console.log('[poly] url:', url);
-
-  gif.onload = () => {
-    console.log('[poly] iframe loaded');
-    gif.style.display = 'block';
-    statusEl.style.display = 'none';
-    randBtn.disabled = false;
-  };
-  gif.src = url;
+  displayPattern(base, balls, family);
+  updateUrl();
 }
 
 randBtn.addEventListener('click', randomize);
-randomize();
+
+// ----- Init -----
+
+const urlPattern = readUrlParams();
+if (urlPattern) {
+  displayPattern(urlPattern.base, urlPattern.balls, urlPattern.family);
+} else {
+  randomize();
+}
 </script>
 </body>
 </html>
