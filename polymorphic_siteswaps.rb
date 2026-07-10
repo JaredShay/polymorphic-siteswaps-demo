@@ -121,10 +121,13 @@ class PolymorphicSiteswaps
   # A pattern is valid when all holes reach 0 and the sum equals target.
   #
   # Extended: a cross throw may also target a non-active intermediate beat, placing
-  # a hold in the catching hand until its next active slot. The catching hand must
-  # have no active beats during the cross's transit — at juggling tempo a 4x arrives
-  # too quickly for the catching hand to also throw mid-transit (it functions as a
-  # standard 2x). Crosses with value < 4 are disallowed for the same reason.
+  # a hold in the catching hand until its next active slot. Any cross value is
+  # valid — small crosses (2x, 4x) are fast zips, like 2x in standard sync. The
+  # "functional 2x" scales with each polyrhythm (min_cross_value = 2 *
+  # min_beat_spacing): 4x for 3-over-2, 6x for 4-over-3, 8x for 5-over-4.
+  # Intermediate crosses below this threshold are fast zips — the catching hand
+  # must have no active beats during transit. Crosses at or above are normal
+  # speed and skip the transit check.
   def search
     t0       = Time.now
     @results = []
@@ -175,10 +178,9 @@ class PolymorphicSiteswaps
       next if v.zero?
       [false, true].each do |cross|
         next if cross && !allow_crosses
-        next if cross && v < 4  # too fast at juggling tempo
-        # No transit check here: for direct active-to-active crosses the landing IS
-        # a catching-hand slot, so high-value crosses (8x, 12x…) naturally allow
-        # catching-hand throws during transit — that's expected juggling behaviour.
+        # No transit check or minimum for direct crosses: if it lands on an active
+        # slot, it's valid. Small crosses (2x, 4x) are fast zips — the same as in
+        # standard sync.
         lh = cross ? hand ^ 1 : hand
         lb = (beat + v / 2) % period
         next if holes[lb][lh].zero?
@@ -196,8 +198,9 @@ class PolymorphicSiteswaps
 
     # --- Intermediate cross: land at a non-active beat, hold to next active slot ---
     #
-    # The catching hand must have no active beats during the cross's transit. The
-    # sum contribution equals v_cross + v_hold, identical to a direct throw landing
+    # For fast zips (v_cross < min_cross_value), the catching hand must have no
+    # active beats during transit. Normal-speed crosses skip this check. The sum
+    # contribution equals v_cross + v_hold, identical to a direct throw landing
     # at next_active, so the target constraint is preserved.
     if allow_crosses
       lh       = hand ^ 1
@@ -210,9 +213,7 @@ class PolymorphicSiteswaps
         next if diff.zero?
         v_cross = 2 * diff
         next unless throw_set.include?(v_cross)
-        next if v_cross < 4  # minimum practical cross at juggling tempo
-
-        next if catching_hand_busy_during_transit?(beat, lb, lh)
+        next if v_cross < min_cross_value && catching_hand_busy_during_transit?(beat, lb, lh)
 
         next_active = next_active_beat(lh, lb)
         next if holes[next_active][lh].zero?
@@ -268,6 +269,14 @@ class PolymorphicSiteswaps
     @throw_set ||= throws.to_set
   end
 
+  def min_cross_value
+    @min_cross_value ||= 2 * [beat_spacing(left_beats), beat_spacing(right_beats)].min
+  end
+
+  def beat_spacing(beats)
+    period / beats.size
+  end
+
   # --- Cross throw helpers ---
 
   # Returns the next active beat for +hand+ strictly after +from_beat+,
@@ -278,9 +287,7 @@ class PolymorphicSiteswaps
   end
 
   # True if the catching hand has any active beat strictly between +throw_beat+
-  # and +land_beat+ (exclusive, wrapping around the period). At juggling tempo a
-  # crossing throw arrives too quickly for the catching hand to also throw
-  # mid-transit, so any such overlap makes the cross physically impossible.
+  # and +land_beat+ (exclusive, wrapping around the period).
   def catching_hand_busy_during_transit?(throw_beat, land_beat, catching_hand)
     catching_beats = catching_hand == 0 ? left_beats : right_beats
     land_offset    = (land_beat - throw_beat + period) % period

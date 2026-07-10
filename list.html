@@ -74,7 +74,7 @@ document.title = `${title} — Poly Randomizer`;
 document.getElementById('page-title').textContent = title;
 
 function buildJLUrl(pattern) {
-  const bps = family === '4over3' ? 15 : 10;
+  const bps = { '3over2': 10, '4over3': 15, '5over2': 10, '5over3': 15, '5over4': 20 }[family] ?? 10;
   return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 
