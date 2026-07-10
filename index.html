@@ -50,6 +50,12 @@
     color: #bbb;
     letter-spacing: 0.02em;
   }
+  #pattern-info {
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+    min-height: 1.2em;
+  }
   #pattern {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: 13px;
@@ -161,6 +167,7 @@
   <span id="status">Loading…</span>
   <iframe id="gif" title="Juggling pattern animation" style="display:none"></iframe>
 </div>
+<div id="pattern-info"></div>
 <div id="pattern"></div>
 <div id="pattern-links">
   <a id="juggling-lab-link" href="#" target="_blank" rel="noopener">JugglingLab ↗</a>
@@ -178,11 +185,11 @@
   <div class="filter-row">
     <span class="filter-label">Polyrhythm</span>
     <div class="toggle-group">
-      <button class="toggle on" data-group="family" data-value="3over2">3 over 2</button>
-      <button class="toggle on" data-group="family" data-value="4over3">4 over 3</button>
-      <button class="toggle on" data-group="family" data-value="5over2">5 over 2</button>
-      <button class="toggle on" data-group="family" data-value="5over3">5 over 3</button>
-      <button class="toggle on" data-group="family" data-value="5over4">5 over 4</button>
+      <button class="toggle on" data-group="family" data-value="3over2">3 / 2</button>
+      <button class="toggle on" data-group="family" data-value="4over3">4 / 3</button>
+      <button class="toggle on" data-group="family" data-value="5over2">5 / 2</button>
+      <button class="toggle on" data-group="family" data-value="5over3">5 / 3</button>
+      <button class="toggle on" data-group="family" data-value="5over4">5 / 4</button>
     </div>
   </div>
   <div class="filter-row">
@@ -230,15 +237,18 @@ const filters = {
 };
 
 const cache = {};
-let current = null; // { base, balls, family, pattern }
+let current = null;
 
 const gif             = document.getElementById('gif');
 const statusEl        = document.getElementById('status');
+const patternInfoEl   = document.getElementById('pattern-info');
 const patternEl       = document.getElementById('pattern');
 const randBtn         = document.getElementById('randomize-btn');
 const patternLinksEl  = document.getElementById('pattern-links');
 const jugglingLabLink = document.getElementById('juggling-lab-link');
 const shareBtn        = document.getElementById('share-btn');
+
+const familyLabel = { '3over2': '3 / 2', '4over3': '4 / 3', '5over2': '5 / 2', '5over3': '5 / 3', '5over4': '5 / 4' };
 
 // ----- Filter toggle handling -----
 
@@ -272,10 +282,11 @@ function updateUrl() {
     `p=${current.base}`,
     `b=${current.balls}`,
     `f=${current.family}`,
+    current.state ? `s=${current.state}` : '',
     `fb=${[...filters.balls].join(',')}`,
     `ff=${[...filters.family].join(',')}`,
     `fs=${[...filters.state].join(',')}`,
-  ].join('&');
+  ].filter(Boolean).join('&');
   history.pushState(null, '', '?' + qs);
 }
 
@@ -286,7 +297,7 @@ function readUrlParams() {
   if (params.has('fs')) filters.state  = new Set(params.get('fs').split(','));
   syncFilterButtons();
   if (params.has('p') && params.has('b') && params.has('f')) {
-    return { base: params.get('p'), balls: parseInt(params.get('b')), family: params.get('f') };
+    return { base: params.get('p'), balls: parseInt(params.get('b')), family: params.get('f'), state: params.get('s') || '' };
   }
   return null;
 }
@@ -302,7 +313,7 @@ async function loadPatterns() {
   for (const b of filters.balls) {
     for (const family of filters.family) {
       for (const s of filters.state) {
-        keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family });
+        keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family, state: s });
       }
     }
   }
@@ -321,9 +332,9 @@ async function loadPatterns() {
   );
 
   const pool = [];
-  for (const { key, balls, family } of keys) {
+  for (const { key, balls, family, state } of keys) {
     for (const pattern of (cache[key] || [])) {
-      pool.push({ pattern, balls, family });
+      pool.push({ pattern, balls, family, state });
     }
   }
   return pool;
@@ -338,9 +349,11 @@ function buildUrl(pattern, family) {
 
 // ----- Display pattern -----
 
-function displayPattern(base, balls, family) {
-  current = { base, balls, family };
+function displayPattern(base, balls, family, state) {
+  current = { base, balls, family, state };
 
+  const stateLabel = state ? (state.charAt(0).toUpperCase() + state.slice(1)) : '';
+  patternInfoEl.textContent = `${balls}b · ${familyLabel[family] || family}${stateLabel ? ' · ' + stateLabel : ''}`;
   patternEl.textContent = base;
 
   const url = buildUrl(base, family);
@@ -391,8 +404,8 @@ async function randomize() {
     return;
   }
 
-  const { pattern: base, balls, family } = pool[Math.floor(Math.random() * pool.length)];
-  displayPattern(base, balls, family);
+  const { pattern: base, balls, family, state } = pool[Math.floor(Math.random() * pool.length)];
+  displayPattern(base, balls, family, state);
   updateUrl();
 }
 
@@ -402,7 +415,7 @@ randBtn.addEventListener('click', randomize);
 
 const urlPattern = readUrlParams();
 if (urlPattern) {
-  displayPattern(urlPattern.base, urlPattern.balls, urlPattern.family);
+  displayPattern(urlPattern.base, urlPattern.balls, urlPattern.family, urlPattern.state);
 } else {
   randomize();
 }

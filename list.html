@@ -66,7 +66,7 @@ const balls   = params.get('balls')  || '4';
 const family  = params.get('family') || '3over2';
 const state   = params.get('state')  || 'ground';
 
-const familyLabel = { '3over2': '3 over 2', '4over3': '4 over 3', '5over2': '5 over 2', '5over3': '5 over 3', '5over4': '5 over 4' };
+const familyLabel = { '3over2': '3 / 2', '4over3': '4 / 3', '5over2': '5 / 2', '5over3': '5 / 3', '5over4': '5 / 4' };
 const stateLabel  = { ground: 'Ground', active: 'Active' };
 const title = `${balls} balls · ${familyLabel[family]} · ${stateLabel[state]}`;
 
@@ -79,11 +79,7 @@ function buildJLUrl(pattern) {
 }
 
 function buildHomeUrl(pattern) {
-  const p = new URLSearchParams();
-  p.set('p', pattern);
-  p.set('b', balls);
-  p.set('f', family);
-  return `index.html?${p.toString()}`;
+  return `index.html?p=${pattern}&b=${balls}&f=${family}&s=${state}`;
 }
 
 async function load() {
