@@ -120,14 +120,13 @@ class PolymorphicSiteswaps
   # The throw value is determined by the beat distance: v = 2 * ((lb - beat + P) % P).
   # A pattern is valid when all holes reach 0 and the sum equals target.
   #
-  # Extended: a cross throw may also target a non-active intermediate beat, placing
-  # a hold in the catching hand until its next active slot. Any cross value is
-  # valid — small crosses (2x, 4x) are fast zips, like 2x in standard sync. The
-  # "functional 2x" scales with each polyrhythm (min_cross_value = 2 *
-  # min_beat_spacing): 4x for 3-over-2, 6x for 4-over-3, 8x for 5-over-4.
-  # Intermediate crosses below this threshold are fast zips — the catching hand
-  # must have no active beats during transit. Crosses at or above are normal
-  # speed and skip the transit check.
+  # Extended: a zip cross (value <= min_cross_value) may target a non-active
+  # intermediate beat, placing a hold in the catching hand until its next active
+  # slot. The "functional minimum" scales with each polyrhythm (min_cross_value =
+  # 2 * min_beat_spacing): 4 for 3-over-2, 6 for 4-over-3, 8 for 5-over-4.
+  # Only zips get the intermediate hold treatment — the catching hand must have
+  # no active beats during transit. Normal-speed crosses (above min_cross_value)
+  # must land directly on an active beat.
   def search
     t0       = Time.now
     @results = []
@@ -196,12 +195,12 @@ class PolymorphicSiteswaps
       end
     end
 
-    # --- Intermediate cross: land at a non-active beat, hold to next active slot ---
-    #
-    # For fast zips (v_cross < min_cross_value), the catching hand must have no
-    # active beats during transit. Normal-speed crosses skip this check. The sum
-    # contribution equals v_cross + v_hold, identical to a direct throw landing
-    # at next_active, so the target constraint is preserved.
+    # --- Intermediate cross (zip only): land at a non-active beat, hold to next
+    # active slot. Only zips (v_cross <= min_cross_value) may use this path.
+    # Normal-speed crosses must land directly on active beats. The catching hand
+    # must have no active beats during the zip's transit. The sum contribution
+    # equals v_cross + v_hold, identical to a direct throw landing at next_active,
+    # so the target constraint is preserved.
     if allow_crosses
       lh       = hand ^ 1
       lh_beats = lh == 0 ? left_beats : right_beats
@@ -213,7 +212,8 @@ class PolymorphicSiteswaps
         next if diff.zero?
         v_cross = 2 * diff
         next unless throw_set.include?(v_cross)
-        next if v_cross < min_cross_value && catching_hand_busy_during_transit?(beat, lb, lh)
+        next if v_cross > min_cross_value
+        next if catching_hand_busy_during_transit?(beat, lb, lh)
 
         next_active = next_active_beat(lh, lb)
         next if holes[next_active][lh].zero?
