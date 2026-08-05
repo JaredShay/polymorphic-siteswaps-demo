@@ -136,13 +136,10 @@ class PolymorphicSiteswaps
   # The throw value is determined by the beat distance: v = 2 * ((lb - beat + P) % P).
   # A pattern is valid when all holes reach 0 and the sum equals target.
   #
-  # Extended: a zip cross (value <= min_cross_value) may target a non-active
-  # intermediate beat, placing a hold in the catching hand until its next active
-  # slot. The "functional minimum" scales with each polyrhythm (min_cross_value =
-  # 2 * min_beat_spacing): 4 for 3-over-2, 6 for 4-over-3, 8 for 5-over-4.
-  # Only zips get the intermediate hold treatment — the catching hand must have
-  # no active beats during transit. Normal-speed crosses (above min_cross_value)
-  # must land directly on an active beat.
+  # All crosses must land directly on an active beat of the catching hand.
+  # Any cross value is permitted provided it satisfies this constraint — small
+  # crosses (e.g. 2x landing directly on an active beat) are allowed, as jugglers
+  # can accommodate fast throws with dwell time adjustments.
   def search
     t0       = Time.now
     @results = []
@@ -216,9 +213,6 @@ class PolymorphicSiteswaps
       next if v.zero?
       [false, true].each do |cross|
         next if cross && !allow_crosses
-        # No transit check or minimum for direct crosses: if it lands on an active
-        # slot, it's valid. Small crosses (2x, 4x) are fast zips — the same as in
-        # standard sync.
         lh = cross ? hand ^ 1 : hand
         lb = (beat + v / 2) % period
         next if holes[lb][lh].zero?
@@ -233,58 +227,13 @@ class PolymorphicSiteswaps
         holes[lb][lh] += 1
       end
     end
-
-    # --- Intermediate cross (zip only): land at a non-active beat, hold to next
-    # active slot. Only zips (v_cross <= min_cross_value) may use this path.
-    # Normal-speed crosses must land directly on active beats. The catching hand
-    # must have no active beats during the zip's transit. The sum contribution
-    # equals v_cross + v_hold, identical to a direct throw landing at next_active,
-    # so the target constraint is preserved.
-    if allow_crosses
-      lh       = hand ^ 1
-      lh_beats = lh == 0 ? left_beats : right_beats
-
-      (0...period).each do |lb|
-        next if lh_beats.include?(lb)  # only non-active beats for the catching hand
-
-        diff    = (lb - beat + period) % period
-        next if diff.zero?
-        v_cross = 2 * diff
-        next unless throw_set.include?(v_cross)
-        next if v_cross > min_cross_value
-        next if catching_hand_busy_during_transit?(beat, lb, lh)
-
-        next_active = next_active_beat(lh, lb)
-        next if holes[next_active][lh].zero?
-
-        v_hold = 2 * ((next_active - lb + period) % period)
-        next unless throw_set.include?(v_hold)
-
-        new_sum = sum + v_cross + v_hold
-        next if new_sum > target
-        next if new_sum + remaining * throws.max < target
-
-        holes[next_active][lh] -= 1
-        chosen[k] = [v_cross, true, lb, lh, v_hold]
-        fill_slot(slots, k + 1, holes, chosen, new_sum)
-        holes[next_active][lh] += 1
-      end
-    end
   end
 
   def build_beat_arr(slots, chosen)
     beat_arr = Array.new(period) { [Throw.new(0, false), Throw.new(0, false)] }
     slots.each_with_index do |(beat, hand), k|
-      entry = chosen[k]
-      if entry.size == 5
-        # Intermediate cross: cross throw at active beat + hold at intermediate beat
-        v_cross, _, lb, lh, v_hold = entry
-        beat_arr[beat][hand] = Throw.new(v_cross, true)
-        beat_arr[lb][lh]     = Throw.new(v_hold, false)
-      else
-        v, cross = entry
-        beat_arr[beat][hand] = Throw.new(v, cross)
-      end
+      v, cross = chosen[k]
+      beat_arr[beat][hand] = Throw.new(v, cross)
     end
     beat_arr
   end
@@ -306,35 +255,6 @@ class PolymorphicSiteswaps
 
   def throw_set
     @throw_set ||= throws.to_set
-  end
-
-  def min_cross_value
-    @min_cross_value ||= 2 * [beat_spacing(left_beats), beat_spacing(right_beats)].min
-  end
-
-  def beat_spacing(beats)
-    period / beats.size
-  end
-
-  # --- Cross throw helpers ---
-
-  # Returns the next active beat for +hand+ strictly after +from_beat+,
-  # wrapping around the period. +from_beat+ is guaranteed non-active for +hand+.
-  def next_active_beat(hand, from_beat)
-    beats = hand == 0 ? left_beats : right_beats
-    beats.min_by { |b| d = (b - from_beat + period) % period; d.zero? ? period : d }
-  end
-
-  # True if the catching hand has any active beat strictly between +throw_beat+
-  # and +land_beat+ (exclusive, wrapping around the period).
-  def catching_hand_busy_during_transit?(throw_beat, land_beat, catching_hand)
-    catching_beats = catching_hand == 0 ? left_beats : right_beats
-    land_offset    = (land_beat - throw_beat + period) % period
-    land_offset    = period if land_offset.zero?
-    catching_beats.any? do |b|
-      offset = (b - throw_beat + period) % period
-      offset > 0 && offset < land_offset
-    end
   end
 
   # --- Pattern operations ---
