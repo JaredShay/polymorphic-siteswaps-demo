@@ -11,6 +11,13 @@ class PolymorphicSiteswaps
     right_beats: [0, 2, 4],
   }.freeze
 
+  THREE_OVER_TWO_2CYCLE_SPEC = {
+    single_cycle_period: 6,
+    num_cycles:          2,
+    left_beats:          [0, 3, 6, 9],
+    right_beats:         [0, 2, 4, 6, 8, 10],
+  }.freeze
+
   FOUR_OVER_THREE_SPEC = {
     period:      12,
     left_beats:  [0, 4, 8],
@@ -39,6 +46,10 @@ class PolymorphicSiteswaps
     generate(**THREE_OVER_TWO_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
   end
 
+  def self.three_over_two_2cycle(number_of_balls:, throws:, debug: false)
+    generate(**THREE_OVER_TWO_2CYCLE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
+  end
+
   def self.four_over_three(number_of_balls:, throws:, debug: false)
     generate(**FOUR_OVER_THREE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
   end
@@ -55,27 +66,32 @@ class PolymorphicSiteswaps
     generate(**FIVE_OVER_FOUR_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
   end
 
-  def self.generate(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, debug: false)
+  def self.generate(period: nil, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, single_cycle_period: nil, num_cycles: nil, debug: false)
+    resolved_period = single_cycle_period && num_cycles ? single_cycle_period * num_cycles : period
+    raise ArgumentError, "period or (single_cycle_period + num_cycles) required" unless resolved_period
     new(
-      period: period, left_beats: left_beats, right_beats: right_beats,
+      period: resolved_period, left_beats: left_beats, right_beats: right_beats,
       number_of_balls: number_of_balls, throws: throws,
-      allow_crosses: allow_crosses, debug: debug
+      allow_crosses: allow_crosses, single_cycle_period: single_cycle_period,
+      num_cycles: num_cycles, debug: debug
     ).generate
   end
 
   attr_reader :period, :left_beats, :right_beats, :number_of_balls, :throws,
-              :allow_crosses, :debug
+              :allow_crosses, :single_cycle_period, :num_cycles, :debug
 
-  def initialize(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, debug: false)
+  def initialize(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, single_cycle_period: nil, num_cycles: nil, debug: false)
     raise ArgumentError, "throw values must be even" if throws.any?(&:odd?)
     raise ArgumentError, "throw values must be ≤ 35 (single base-36 char)" if throws.any? { |v| v > 35 }
-    @period          = period
-    @left_beats      = left_beats
-    @right_beats     = right_beats
-    @number_of_balls = number_of_balls
-    @throws          = throws
-    @allow_crosses   = allow_crosses
-    @debug           = debug
+    @period              = period
+    @left_beats          = left_beats
+    @right_beats         = right_beats
+    @number_of_balls     = number_of_balls
+    @throws              = throws
+    @allow_crosses       = allow_crosses
+    @single_cycle_period = single_cycle_period
+    @num_cycles          = num_cycles
+    @debug               = debug
   end
 
   def generate
@@ -135,6 +151,21 @@ class PolymorphicSiteswaps
     slots  = strict_throw_slots
     holes  = init_holes(slots)
     chosen = Array.new(slots.size)
+
+    # For multi-cycle patterns, build a checkpoint at each intermediate cycle
+    # boundary (all except the last). At each checkpoint, we verify that at
+    # least one throw from the preceding cycles has landed in the remaining
+    # cycles — otherwise the pattern resolves early and is not genuinely N-cycle.
+    # Keyed by slot index for O(1) lookup in fill_slot.
+    @cycle_checkpoints = {}
+    if single_cycle_period && num_cycles && num_cycles > 1
+      (1...num_cycles).each do |i|
+        boundary = single_cycle_period * i
+        slot_idx = slots.index { |beat, _| beat >= boundary }
+        @cycle_checkpoints[slot_idx] = slots.select { |beat, _| beat >= boundary }
+      end
+    end
+
     fill_slot(slots, 0, holes, chosen, 0)
     log_timing(t0, @nodes, @results.size) if debug
     @results
@@ -159,6 +190,14 @@ class PolymorphicSiteswaps
 
   def fill_slot(slots, k, holes, chosen, sum)
     @nodes += 1
+
+    # Multi-cycle pruning: at each intermediate cycle boundary, verify that at
+    # least one throw from the preceding beats has landed in the remaining beats.
+    # If not, the pattern has resolved to ground state early — prune.
+    if (remaining = @cycle_checkpoints[k])
+      return unless remaining.any? { |b, h| holes[b][h].zero? }
+    end
+
     if k == slots.size
       add_result(build_beat_arr(slots, chosen)) if sum == target
       return
