@@ -67,7 +67,7 @@ const family  = params.get('family') || '3over2';
 const state   = params.get('state')  || 'ground';
 
 const familyLabel = { '3over2': '3 / 2', '4over3': '4 / 3', '5over2': '5 / 2', '5over3': '5 / 3', '5over4': '5 / 4' };
-const stateLabel  = { ground: 'Ground', active: 'Active' };
+const stateLabel  = { ground: 'Ground', active: 'Active', foundational: 'Foundational' };
 const title = `${balls} balls · ${familyLabel[family]} · ${stateLabel[state]}`;
 
 document.title = `${title} — Poly Randomizer`;
