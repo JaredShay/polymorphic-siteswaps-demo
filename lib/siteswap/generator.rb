@@ -16,7 +16,6 @@ class PolymorphicSiteswaps
     right_beats:,
     number_of_balls:,
     throws:,
-    allow_crosses: true,
     single_cycle_period: nil,
     num_cycles: nil,
     debug: false,
@@ -32,7 +31,6 @@ class PolymorphicSiteswaps
       right_beats: right_beats,
       number_of_balls: number_of_balls,
       throws: throws,
-      allow_crosses: allow_crosses,
       single_cycle_period: single_cycle_period,
       num_cycles: num_cycles,
       debug: debug,
@@ -46,7 +44,6 @@ class PolymorphicSiteswaps
     :right_beats,
     :number_of_balls,
     :throws,
-    :allow_crosses,
     :single_cycle_period,
     :num_cycles,
     :debug,
@@ -59,7 +56,6 @@ class PolymorphicSiteswaps
     right_beats:,
     number_of_balls:,
     throws:,
-    allow_crosses: true,
     single_cycle_period: nil,
     num_cycles: nil,
     debug: false,
@@ -79,7 +75,6 @@ class PolymorphicSiteswaps
     @right_beats         = right_beats
     @number_of_balls     = number_of_balls
     @throws              = throws
-    @allow_crosses       = allow_crosses
     @single_cycle_period = single_cycle_period
     @num_cycles          = num_cycles
     @debug               = debug
@@ -206,7 +201,6 @@ class PolymorphicSiteswaps
     throws.each do |v|
       next if v.zero?
       [false, true].each do |cross|
-        next if cross && !allow_crosses
         lh = cross ? hand ^ 1 : hand
         lb = (beat + v / 2) % period
         next if holes[lb][lh].zero?
