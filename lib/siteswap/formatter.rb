@@ -19,6 +19,7 @@ class SiteswapFormatter
     when SyncBeat           then "(#{fmt_throw(el.left)},#{fmt_throw(el.right)})"
     when AsyncThrow         then fmt_throw(el.throw)
     when EmptySlot          then "0"
+    else raise TypeError, "unexpected notation element: #{el.class}"
     end
   end
 

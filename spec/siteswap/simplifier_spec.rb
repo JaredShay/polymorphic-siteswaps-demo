@@ -5,7 +5,7 @@ RSpec.describe SiteswapSimplifier do
 
   def parse_throw(s)
     cross = s.end_with?('x')
-    Siteswap::Notation::Throw.new((cross ? s.chomp('x') : s).to_i(36), cross)
+    Siteswap::Notation::Throw.new(value: (cross ? s.chomp('x') : s).to_i(36), cross: cross)
   end
 
   def parse_beat_arr(str)

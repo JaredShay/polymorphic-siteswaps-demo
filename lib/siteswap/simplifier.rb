@@ -3,7 +3,7 @@ require_relative 'notation'
 # Converts a generator beat array into a simplified notation sequence.
 #
 # Input: [[left_throw, right_throw], ...] as produced by the generator.
-#        Each throw responds to :value and :cross.
+#        Each throw is a Siteswap::Notation::Throw responding to :value and :cross.
 #
 # Output: [SyncBeat | SuppressedSyncBeat | AsyncThrow | EmptySlot, ...] (see Siteswap::Notation)
 #
@@ -34,20 +34,18 @@ class SiteswapSimplifier
   private
 
   def to_beats(beat_arr)
-    beat_arr.map do |l, r|
-      SuppressedSyncBeat.new(Throw.new(l.value, l.cross), Throw.new(r.value, r.cross))
-    end
+    beat_arr.map { |l, r| SuppressedSyncBeat.new(left: l, right: r) }
   end
 
   # Rule 1
   def halve(beats)
-    beats.map { |b| SuppressedSyncBeat.new(halve_throw(b.left), halve_throw(b.right)) }
+    beats.map { |b| SuppressedSyncBeat.new(left: halve_throw(b.left), right: halve_throw(b.right)) }
   end
 
   def halve_throw(t)
     v     = t.value / 2
     cross = (t.value % 4 == 2) ? !t.cross : t.cross
-    Throw.new(v, cross)
+    Throw.new(value: v, cross: cross)
   end
 
   # Rule 2
@@ -72,7 +70,7 @@ class SiteswapSimplifier
   def expand(beats)
     beats.flat_map do |b|
       next [b] unless b.single_hand?
-      b.is_a?(SuppressedSyncBeat) ? [AsyncThrow.new(b.active_throw)] : [AsyncThrow.new(b.active_throw), EmptySlot.new]
+      b.is_a?(SuppressedSyncBeat) ? [AsyncThrow.new(throw: b.active_throw)] : [AsyncThrow.new(throw: b.active_throw), EmptySlot.new]
     end
   end
 end

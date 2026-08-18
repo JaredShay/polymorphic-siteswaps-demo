@@ -1,11 +1,10 @@
 require 'set'
+require_relative 'notation'
 require_relative 'simplifier'
 require_relative 'formatter'
 
 class PolymorphicSiteswaps
-  Throw = Struct.new(:value, :cross) do
-    def empty? = value.zero?
-  end
+  Throw = Siteswap::Notation::Throw
 
   DEFAULT_SIMPLIFIER = SiteswapSimplifier.new.freeze
   DEFAULT_FORMATTER  = SiteswapFormatter.new.freeze
@@ -62,13 +61,8 @@ class PolymorphicSiteswaps
     simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
   )
-    # The patterns are all generated as sync and this validation allows some
-    # looser coding
-    raise ArgumentError, "throw values must be even" if throws.any?(&:odd?)
-
-    # Siteswap is valid higher than 35, this is a quick validation to ensure I
-    # can easily convert to chars, not an actual limitation
-    raise ArgumentError, "throw values must be ≤ 35 (single base-36 char)" if throws.any? { |v| v > 35 }
+    # ThrowList enforces: non-empty, each value is even and ≤ 35 (single base-36 char).
+    raise ArgumentError, "throw values must be even and ≤ 35" unless Siteswap::Types::ThrowList.valid?(throws)
 
     @period              = period
     @left_beats          = left_beats
@@ -210,7 +204,7 @@ class PolymorphicSiteswaps
         next if new_sum + remaining * throws.max < target
 
         holes[lb][lh] -= 1
-        chosen[k] = [v, cross]
+        chosen[k] = Throw.new(value: v, cross: cross)
         fill_slot(slots, k + 1, holes, chosen, new_sum)
         holes[lb][lh] += 1
       end
@@ -218,10 +212,9 @@ class PolymorphicSiteswaps
   end
 
   def build_beat_arr(slots, chosen)
-    beat_arr = Array.new(period) { [Throw.new(0, false), Throw.new(0, false)] }
+    beat_arr = Array.new(period) { [Throw.new(value: 0, cross: false), Throw.new(value: 0, cross: false)] }
     slots.each_with_index do |(beat, hand), k|
-      v, cross = chosen[k]
-      beat_arr[beat][hand] = Throw.new(v, cross)
+      beat_arr[beat][hand] = chosen[k]
     end
     beat_arr
   end
