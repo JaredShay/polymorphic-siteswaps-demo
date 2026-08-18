@@ -1,4 +1,5 @@
 require_relative 'polymorphic_siteswaps'
+require_relative 'siteswap_simplifier'
 
 CONFIGS = [
   { balls: 4, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
@@ -36,7 +37,7 @@ CONFIGS.each do |cfg|
   )
 
   base = "data/#{cfg[:balls]}b_#{cfg[:family]}"
-  write_patterns("#{base}_ground.txt", result[:ground])
-  write_patterns("#{base}_active.txt", result[:active])
+  write_patterns("#{base}_ground.txt", result[:ground].map { |p| SiteswapSimplifier.simplify(p) })
+  write_patterns("#{base}_active.txt", result[:active].map { |p| SiteswapSimplifier.simplify(p) })
   $stdout.flush
 end
