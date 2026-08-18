@@ -1,18 +1,18 @@
-require_relative 'polymorphic_siteswaps'
-require_relative 'siteswap_simplifier'
+require_relative 'lib/siteswap/generator'
+require_relative 'lib/siteswap/specs'
 
 CONFIGS = [
-  { balls: 4, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
-  { balls: 5, family: '3over2', method: :three_over_two,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
-  { balls: 4, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
-  { balls: 5, family: '4over3', method: :four_over_three, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
-  { balls: 4, family: '5over2', method: :five_over_two,   throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
-  { balls: 5, family: '5over2', method: :five_over_two,   throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
-  { balls: 4, family: '5over3', method: :five_over_three, throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
-  { balls: 5, family: '5over3', method: :five_over_three, throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
+  { balls: 4, family: '3over2', spec: Siteswap::Specs::THREE_OVER_TWO,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 5, family: '3over2', spec: Siteswap::Specs::THREE_OVER_TWO,  throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 4, family: '4over3', spec: Siteswap::Specs::FOUR_OVER_THREE, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 5, family: '4over3', spec: Siteswap::Specs::FOUR_OVER_THREE, throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
+  { balls: 4, family: '5over2', spec: Siteswap::Specs::FIVE_OVER_TWO,   throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
+  { balls: 5, family: '5over2', spec: Siteswap::Specs::FIVE_OVER_TWO,   throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
+  { balls: 4, family: '5over3', spec: Siteswap::Specs::FIVE_OVER_THREE, throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
+  { balls: 5, family: '5over3', spec: Siteswap::Specs::FIVE_OVER_THREE, throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
   # JugglingLab uses single base-36 chars (0–z = 0–35); cap throws at 34 (highest even value ≤ 35).
-  { balls: 4, family: '5over4', method: :five_over_four,  throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
-  { balls: 5, family: '5over4', method: :five_over_four,  throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
+  { balls: 4, family: '5over4', spec: Siteswap::Specs::FIVE_OVER_FOUR,  throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
+  { balls: 5, family: '5over4', spec: Siteswap::Specs::FIVE_OVER_FOUR,  throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34] },
 ].freeze
 
 SAMPLE_LIMIT = 200
@@ -30,14 +30,10 @@ def write_patterns(path, patterns)
 end
 
 CONFIGS.each do |cfg|
-  result = PolymorphicSiteswaps.send(
-    cfg[:method],
-    number_of_balls: cfg[:balls],
-    throws: cfg[:throws]
-  )
+  result = PolymorphicSiteswaps.generate(**cfg[:spec], number_of_balls: cfg[:balls], throws: cfg[:throws])
 
   base = "data/#{cfg[:balls]}b_#{cfg[:family]}"
-  write_patterns("#{base}_ground.txt", result[:ground].map { |p| SiteswapSimplifier.simplify(p) })
-  write_patterns("#{base}_active.txt", result[:active].map { |p| SiteswapSimplifier.simplify(p) })
+  write_patterns("#{base}_ground.txt", result[:ground])
+  write_patterns("#{base}_active.txt", result[:active])
   $stdout.flush
 end

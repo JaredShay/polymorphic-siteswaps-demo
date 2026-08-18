@@ -1,88 +1,79 @@
 require 'set'
+require_relative 'simplifier'
+require_relative 'formatter'
 
 class PolymorphicSiteswaps
   Throw = Struct.new(:value, :cross) do
     def empty? = value.zero?
   end
 
-  THREE_OVER_TWO_SPEC = {
-    period:      6,
-    left_beats:  [0, 3],
-    right_beats: [0, 2, 4],
-  }.freeze
+  DEFAULT_SIMPLIFIER = SiteswapSimplifier.new.freeze
+  DEFAULT_FORMATTER  = SiteswapFormatter.new.freeze
 
-  THREE_OVER_TWO_2CYCLE_SPEC = {
-    single_cycle_period: 6,
-    num_cycles:          2,
-    left_beats:          [0, 3, 6, 9],
-    right_beats:         [0, 2, 4, 6, 8, 10],
-  }.freeze
-
-  FOUR_OVER_THREE_SPEC = {
-    period:      12,
-    left_beats:  [0, 4, 8],
-    right_beats: [0, 3, 6, 9],
-  }.freeze
-
-  FIVE_OVER_TWO_SPEC = {
-    period:      10,
-    left_beats:  [0, 5],
-    right_beats: [0, 2, 4, 6, 8],
-  }.freeze
-
-  FIVE_OVER_THREE_SPEC = {
-    period:      15,
-    left_beats:  [0, 5, 10],
-    right_beats: [0, 3, 6, 9, 12],
-  }.freeze
-
-  FIVE_OVER_FOUR_SPEC = {
-    period:      20,
-    left_beats:  [0, 5, 10, 15],
-    right_beats: [0, 4, 8, 12, 16],
-  }.freeze
-
-  def self.three_over_two(number_of_balls:, throws:, debug: false)
-    generate(**THREE_OVER_TWO_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.three_over_two_2cycle(number_of_balls:, throws:, debug: false)
-    generate(**THREE_OVER_TWO_2CYCLE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.four_over_three(number_of_balls:, throws:, debug: false)
-    generate(**FOUR_OVER_THREE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.five_over_two(number_of_balls:, throws:, debug: false)
-    generate(**FIVE_OVER_TWO_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.five_over_three(number_of_balls:, throws:, debug: false)
-    generate(**FIVE_OVER_THREE_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.five_over_four(number_of_balls:, throws:, debug: false)
-    generate(**FIVE_OVER_FOUR_SPEC, number_of_balls: number_of_balls, throws: throws, debug: debug)
-  end
-
-  def self.generate(period: nil, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, single_cycle_period: nil, num_cycles: nil, debug: false)
+  def self.generate(
+    period: nil,
+    left_beats:,
+    right_beats:,
+    number_of_balls:,
+    throws:,
+    allow_crosses: true,
+    single_cycle_period: nil,
+    num_cycles: nil,
+    debug: false,
+    simplifier: DEFAULT_SIMPLIFIER,
+    formatter: DEFAULT_FORMATTER
+  )
     resolved_period = single_cycle_period && num_cycles ? single_cycle_period * num_cycles : period
     raise ArgumentError, "period or (single_cycle_period + num_cycles) required" unless resolved_period
+
     new(
-      period: resolved_period, left_beats: left_beats, right_beats: right_beats,
-      number_of_balls: number_of_balls, throws: throws,
-      allow_crosses: allow_crosses, single_cycle_period: single_cycle_period,
-      num_cycles: num_cycles, debug: debug
+      period: resolved_period,
+      left_beats: left_beats,
+      right_beats: right_beats,
+      number_of_balls: number_of_balls,
+      throws: throws,
+      allow_crosses: allow_crosses,
+      single_cycle_period: single_cycle_period,
+      num_cycles: num_cycles,
+      debug: debug,
+      simplifier: simplifier,
+      formatter: formatter
     ).generate
   end
 
-  attr_reader :period, :left_beats, :right_beats, :number_of_balls, :throws,
-              :allow_crosses, :single_cycle_period, :num_cycles, :debug
+  attr_reader :period,
+    :left_beats,
+    :right_beats,
+    :number_of_balls,
+    :throws,
+    :allow_crosses,
+    :single_cycle_period,
+    :num_cycles,
+    :debug,
+    :simplifier,
+    :formatter
 
-  def initialize(period:, left_beats:, right_beats:, number_of_balls:, throws:, allow_crosses: true, single_cycle_period: nil, num_cycles: nil, debug: false)
+  def initialize(
+    period:,
+    left_beats:,
+    right_beats:,
+    number_of_balls:,
+    throws:,
+    allow_crosses: true,
+    single_cycle_period: nil,
+    num_cycles: nil,
+    debug: false,
+    simplifier: DEFAULT_SIMPLIFIER,
+    formatter: DEFAULT_FORMATTER
+  )
+    # The patterns are all generated as sync and this validation allows some
+    # looser coding
     raise ArgumentError, "throw values must be even" if throws.any?(&:odd?)
+
+    # Siteswap is valid higher than 35, this is a quick validation to ensure I
+    # can easily convert to chars, not an actual limitation
     raise ArgumentError, "throw values must be ≤ 35 (single base-36 char)" if throws.any? { |v| v > 35 }
+
     @period              = period
     @left_beats          = left_beats
     @right_beats         = right_beats
@@ -92,6 +83,8 @@ class PolymorphicSiteswaps
     @single_cycle_period = single_cycle_period
     @num_cycles          = num_cycles
     @debug               = debug
+    @simplifier          = simplifier
+    @formatter           = formatter
   end
 
   def generate
@@ -100,29 +93,30 @@ class PolymorphicSiteswaps
 
   private
 
-  # --- Categorization ---
-
   def categorize(patterns)
     crossing       = patterns.select { |b| has_cross?(b) }
     ground, active = partition_by_ground_state(crossing)
 
     {
-      ground: to_strings(ground),
-      active: to_strings(active),
+      ground: format_patterns(ground),
+      active: format_patterns(active),
     }
+  end
+
+  def format_patterns(patterns)
+    patterns.map { |beat_arr| formatter.format(simplifier.simplify(beat_arr)) }
   end
 
   def partition_by_ground_state(patterns)
     return [[], []] if patterns.empty?
+
     by_state     = patterns.group_by { |b| beat_state(b) }
     ground_state = by_state.keys.min_by { |s| s.sum { |rel, _| rel } }
     patterns.partition { |b| beat_state(b) == ground_state }
   end
 
-  def to_strings(patterns)
-    patterns.map { |b| unparse(b) }
-  end
-
+  # The patterns generated here are not interesting if they don't have crossing
+  # throws
   def has_cross?(beats)
     beats.any? { |l, r| l.cross || r.cross }
   end
@@ -239,10 +233,10 @@ class PolymorphicSiteswaps
   end
 
   def add_result(beat_arr)
-    key = unparse(canonical_rotation(beat_arr))
+    key = sync_unparse(canonical_rotation(beat_arr))
     return if @seen[key]
     @seen[key] = true
-    mirror_key = unparse(canonical_rotation(mirror(beat_arr)))
+    mirror_key = sync_unparse(canonical_rotation(mirror(beat_arr)))
     @seen[mirror_key] = true unless mirror_key == key
     @results << beat_arr
   end
@@ -274,7 +268,7 @@ class PolymorphicSiteswaps
 
   def canonical_rotation(beats)
     starts = rotation_start_candidates(beats)
-    starts.map { |r| beats.rotate(r) }.min_by { |rot| unparse(rot) }
+    starts.map { |r| beats.rotate(r) }.min_by { |rot| sync_unparse(rot) }
   end
 
   def rotation_start_candidates(beats)
@@ -286,11 +280,12 @@ class PolymorphicSiteswaps
     beats.map { |l, r| [r, l] }
   end
 
-  def unparse(beats)
-    beats.map { |l, r| "(#{fmt_throw(l)},#{fmt_throw(r)})" }.join
+  # Internal sync formatter used for deduplication keys only.
+  def sync_unparse(beats)
+    beats.map { |l, r| "(#{sync_fmt(l)},#{sync_fmt(r)})" }.join
   end
 
-  def fmt_throw(t)
+  def sync_fmt(t)
     s = t.value.to_s(36)
     t.cross ? "#{s}x" : s
   end

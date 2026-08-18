@@ -1,0 +1,20 @@
+const canvas = $0;
+canvas.captureStream
+
+const stream = canvas.captureStream(30);
+const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+const chunks = [];
+recorder.ondataavailable = (e) => chunks.push(e.data);
+recorder.onstop = () => {
+  const blob = new Blob(chunks, { type: 'video/webm' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'capture.webm';
+  a.click();
+};
+recorder.start();
+console.log('Recording... run recorder.stop() when done');
+
+recorder.stop()
+
+ffmpeg -i capture.webm -vf "fps=24,scale=800:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" out.gif
