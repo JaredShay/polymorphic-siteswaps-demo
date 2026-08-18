@@ -5,7 +5,7 @@ require_relative 'notation'
 # Input: [[left_throw, right_throw], ...] as produced by the generator.
 #        Each throw responds to :value and :cross.
 #
-# Output: [SyncBeat | AsyncThrow | EmptySlot, ...] (see Siteswap::Notation)
+# Output: [SyncBeat | SuppressedSyncBeat | AsyncThrow | EmptySlot, ...] (see Siteswap::Notation)
 #
 # Rule 1 – Halve: divide every throw value by 2, mark all beats suppressed (!).
 #   Halving can flip parity, which must be compensated by toggling x:
@@ -18,10 +18,11 @@ require_relative 'notation'
 # Rule 3 – Single-hand suppressed: (N,0)! or (0,N)! → AsyncThrow(N)
 # Rule 4 – Single-hand un-suppressed: (N,0) or (0,N) → AsyncThrow(N), EmptySlot
 class SiteswapSimplifier
-  SyncBeat   = Siteswap::Notation::SyncBeat
-  AsyncThrow = Siteswap::Notation::AsyncThrow
-  EmptySlot  = Siteswap::Notation::EmptySlot
-  Throw      = Siteswap::Notation::Throw
+  SyncBeat           = Siteswap::Notation::SyncBeat
+  SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
+  AsyncThrow         = Siteswap::Notation::AsyncThrow
+  EmptySlot          = Siteswap::Notation::EmptySlot
+  Throw              = Siteswap::Notation::Throw
 
   def simplify(beat_arr)
     beats = to_beats(beat_arr)
@@ -34,13 +35,13 @@ class SiteswapSimplifier
 
   def to_beats(beat_arr)
     beat_arr.map do |l, r|
-      SyncBeat.new(Throw.new(l.value, l.cross), Throw.new(r.value, r.cross), true)
+      SuppressedSyncBeat.new(Throw.new(l.value, l.cross), Throw.new(r.value, r.cross))
     end
   end
 
   # Rule 1
   def halve(beats)
-    beats.map { |b| SyncBeat.new(halve_throw(b.left), halve_throw(b.right), true) }
+    beats.map { |b| SuppressedSyncBeat.new(halve_throw(b.left), halve_throw(b.right)) }
   end
 
   def halve_throw(t)
@@ -56,8 +57,8 @@ class SiteswapSimplifier
     while i < beats.size
       b   = beats[i]
       nxt = beats[i + 1]
-      if b.suppressed && nxt&.suppressed && nxt.empty?
-        result << SyncBeat.new(b.left, b.right, false)
+      if b.is_a?(SuppressedSyncBeat) && nxt&.is_a?(SuppressedSyncBeat) && nxt.empty?
+        result << b.cancel
         i += 2
       else
         result << b
@@ -71,7 +72,7 @@ class SiteswapSimplifier
   def expand(beats)
     beats.flat_map do |b|
       next [b] unless b.single_hand?
-      b.suppressed ? [AsyncThrow.new(b.active_throw)] : [AsyncThrow.new(b.active_throw), EmptySlot.new]
+      b.is_a?(SuppressedSyncBeat) ? [AsyncThrow.new(b.active_throw)] : [AsyncThrow.new(b.active_throw), EmptySlot.new]
     end
   end
 end

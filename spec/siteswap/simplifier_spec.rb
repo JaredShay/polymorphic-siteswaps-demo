@@ -1,0 +1,70 @@
+RSpec.describe SiteswapSimplifier do
+  let(:simplifier) { described_class.new }
+
+  BEAT_RE = /\(([0-9a-z]x?),([0-9a-z]x?)\)(!?)/
+
+  def parse_throw(s)
+    cross = s.end_with?('x')
+    Siteswap::Notation::Throw.new((cross ? s.chomp('x') : s).to_i(36), cross)
+  end
+
+  def parse_beat_arr(str)
+    str.scan(BEAT_RE).map { |l, r, _| [parse_throw(l), parse_throw(r)] }
+  end
+
+  describe 'known patterns' do
+    subject(:result) { SiteswapFormatter.new.format(simplifier.simplify(input)) }
+
+    context 'ground state' do
+      context '3/2 – first known good' do
+        let(:input) { parse_beat_arr("(8x,c)(0,0)(0,8x)(ax,0)(0,ax)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(4x,6)4x550")
+        end
+      end
+
+      context '3/2 – crossing with 7' do
+        let(:input) { parse_beat_arr("(cx,8)(0,0)(0,ex)(ax,0)(0,4x)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(6x,4)752x0")
+        end
+      end
+
+      context '3/2 – mixed crossing heights' do
+        let(:input) { parse_beat_arr("(8x,c)(0,0)(0,8x)(c,0)(0,8)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(4x,6)4x640")
+        end
+      end
+    end
+
+    context 'active state' do
+      context '3/2 – low crossing sync' do
+        let(:input) { parse_beat_arr("(4x,6x)(0,0)(0,4)(i,0)(0,g)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(2x,3)29x80")
+        end
+      end
+
+      context '3/2 – high crossing sync' do
+        let(:input) { parse_beat_arr("(8x,4)(0,0)(0,ex)(6,0)(0,g)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(4x,2)73x80")
+        end
+      end
+
+      context '3/2 – symmetric crossing' do
+        let(:input) { parse_beat_arr("(c,6x)(0,0)(0,c)(6x,0)(0,c)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(6,3)6360")
+        end
+      end
+    end
+  end
+end
