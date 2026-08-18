@@ -22,16 +22,52 @@ class SiteswapSimplifier
   SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
   AsyncThrow         = Siteswap::Notation::AsyncThrow
   EmptySlot          = Siteswap::Notation::EmptySlot
+  HandAnnotation     = Siteswap::Notation::HandAnnotation
   Throw              = Siteswap::Notation::Throw
 
-  def simplify(beat_arr)
+  def initialize(verbose: false)
+    @verbose = verbose
+  end
+
+  def simplify(beat_arr, verbose: @verbose)
+    log_raw(beat_arr) if verbose
     beats = to_beats(beat_arr)
     beats = halve(beats)
+    log("after halve", beats) if verbose
     beats = cancel_pairs(beats)
-    expand(beats)
+    log("after cancel_pairs", beats) if verbose
+    result = expand(beats)
+    log("after expand", result) if verbose
+    result
   end
 
   private
+
+  def log_raw(beat_arr)
+    str = beat_arr.map { |l, r| "(#{fmt(l)},#{fmt(r)})" }.join
+    $stdout.puts "  [raw]: #{str}"
+  end
+
+  def log(label, elements)
+    $stdout.puts "  [#{label}]: #{render(elements)}"
+  end
+
+  def render(elements)
+    elements.map { |el|
+      case el
+      when SuppressedSyncBeat then "(#{fmt(el.left)},#{fmt(el.right)})!"
+      when SyncBeat           then "(#{fmt(el.left)},#{fmt(el.right)})"
+      when AsyncThrow         then fmt(el.throw)
+      when HandAnnotation     then el.hand == :right ? "R" : "L"
+      when EmptySlot          then "0"
+      end
+    }.join
+  end
+
+  def fmt(t)
+    s = t.value.to_s(36)
+    t.cross ? "#{s}x" : s
+  end
 
   def to_beats(beat_arr)
     beat_arr.map { |l, r| SuppressedSyncBeat.new(left: l, right: r) }
@@ -68,9 +104,25 @@ class SiteswapSimplifier
 
   # Rules 3 & 4
   def expand(beats)
-    beats.flat_map do |b|
-      next [b] unless b.single_hand?
-      b.is_a?(SuppressedSyncBeat) ? [AsyncThrow.new(throw: b.active_throw)] : [AsyncThrow.new(throw: b.active_throw), EmptySlot.new]
+    result    = []
+    saw_sync  = false
+    in_async  = false
+
+    beats.each do |b|
+      if b.single_hand?
+        if saw_sync && !in_async
+          result << HandAnnotation.new(b.left.value.zero? ? :right : :left)
+          in_async = true
+        end
+        result << AsyncThrow.new(throw: b.active_throw)
+        result << EmptySlot.new unless b.is_a?(SuppressedSyncBeat)
+      else
+        saw_sync = true
+        in_async = false
+        result << b
+      end
     end
+
+    result
   end
 end

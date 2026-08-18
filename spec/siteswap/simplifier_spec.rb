@@ -20,7 +20,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(8x,c)(0,0)(0,8x)(ax,0)(0,ax)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(4x,6)4x550")
+          expect(result).to eq("(4x,6)R4x550")
         end
       end
 
@@ -28,7 +28,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(cx,8)(0,0)(0,ex)(ax,0)(0,4x)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(6x,4)752x0")
+          expect(result).to eq("(6x,4)R752x0")
         end
       end
 
@@ -36,7 +36,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(8x,c)(0,0)(0,8x)(c,0)(0,8)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(4x,6)4x640")
+          expect(result).to eq("(4x,6)R4x640")
         end
       end
     end
@@ -46,7 +46,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(4x,6x)(0,0)(0,4)(i,0)(0,g)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(2x,3)29x80")
+          expect(result).to eq("(2x,3)R29x80")
         end
       end
 
@@ -54,7 +54,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(8x,4)(0,0)(0,ex)(6,0)(0,g)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(4x,2)73x80")
+          expect(result).to eq("(4x,2)R73x80")
         end
       end
 
@@ -62,7 +62,7 @@ RSpec.describe SiteswapSimplifier do
         let(:input) { parse_beat_arr("(c,6x)(0,0)(0,c)(6x,0)(0,c)(0,0)") }
 
         it 'produces the expected notation' do
-          expect(result).to eq("(6,3)6360")
+          expect(result).to eq("(6,3)R6360")
         end
       end
     end

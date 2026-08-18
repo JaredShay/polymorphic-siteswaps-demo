@@ -6,6 +6,7 @@ class SiteswapFormatter
   SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
   AsyncThrow         = Siteswap::Notation::AsyncThrow
   EmptySlot          = Siteswap::Notation::EmptySlot
+  HandAnnotation     = Siteswap::Notation::HandAnnotation
 
   def format(elements)
     elements.map { |el| render(el) }.join
@@ -18,6 +19,7 @@ class SiteswapFormatter
     when SuppressedSyncBeat then "(#{fmt_throw(el.left)},#{fmt_throw(el.right)})!"
     when SyncBeat           then "(#{fmt_throw(el.left)},#{fmt_throw(el.right)})"
     when AsyncThrow         then fmt_throw(el.throw)
+    when HandAnnotation     then el.hand == :right ? "R" : "L"
     when EmptySlot          then "0"
     else raise TypeError, "unexpected notation element: #{el.class}"
     end

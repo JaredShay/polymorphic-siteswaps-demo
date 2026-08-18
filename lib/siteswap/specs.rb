@@ -52,6 +52,15 @@ module Siteswap
       end
     end
 
+    # "3 3 2" right hand, "4 4" left hand — both sum to period 8.
+    # right_beats: 0, 3, 6  (gaps of 3, 3, 2)
+    # left_beats:  0, 4     (gaps of 4, 4)
+    THREE_THREE_TWO_OVER_FOUR_FOUR = SingleCycleSpec.new(
+      period:      8,
+      left_beats:  [0, 4],
+      right_beats: [0, 3, 6]
+    ).freeze
+
     THREE_OVER_TWO        = PolyrhythmSpec.new(right: 3, left: 2).freeze
     THREE_OVER_TWO_2CYCLE = PolyrhythmSpec.new(right: 3, left: 2, cycles: 2).freeze
     FOUR_OVER_THREE       = PolyrhythmSpec.new(right: 4, left: 3).freeze

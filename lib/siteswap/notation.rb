@@ -36,10 +36,13 @@ module Siteswap
 
     EmptySlot = Class.new
 
+    HandAnnotation = Struct.new(:hand)  # hand: :left | :right
+
     NotationElement =
       Types.Instance(SyncBeat) |
       Types.Instance(SuppressedSyncBeat) |
       Types.Instance(AsyncThrow) |
-      Types.Instance(EmptySlot)
+      Types.Instance(EmptySlot) |
+      Types.Instance(HandAnnotation)
   end
 end
