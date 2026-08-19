@@ -142,7 +142,19 @@
     max-width: 480px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+  }
+  .browse-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .browse-rhythm-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
   .browse-links {
     display: flex;
@@ -183,13 +195,15 @@
     </div>
   </div>
   <div class="filter-row">
-    <span class="filter-label">Polyrhythm</span>
+    <span class="filter-label">Rhythm</span>
     <div class="toggle-group">
       <button class="toggle on" data-group="family" data-value="3over2">3 / 2</button>
       <button class="toggle on" data-group="family" data-value="4over3">4 / 3</button>
       <button class="toggle on" data-group="family" data-value="5over2">5 / 2</button>
       <button class="toggle on" data-group="family" data-value="5over3">5 / 3</button>
       <button class="toggle on" data-group="family" data-value="5over4">5 / 4</button>
+      <button class="toggle on" data-group="family" data-value="332">332</button>
+      <button class="toggle on" data-group="family" data-value="clave">Clave</button>
     </div>
   </div>
   <div class="filter-row">
@@ -203,47 +217,101 @@
 
 <button id="randomize-btn">Randomize</button>
 
-<div id="foundational">
-  <span class="filter-label">Foundational patterns</span>
-  <div class="browse-links">
-    <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=foundational">4b · 3/2</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=foundational">5b · 3/2</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=foundational">4b · 4/3</a>
-  </div>
-</div>
-
 <div id="browse">
   <span class="filter-label">Browse patterns</span>
-  <div class="browse-links">
-    <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=ground">4b · 3/2 · Ground</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=active">4b · 3/2 · Active</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=ground">5b · 3/2 · Ground</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=active">5b · 3/2 · Active</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=ground">4b · 4/3 · Ground</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=active">4b · 4/3 · Active</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=ground">5b · 4/3 · Ground</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=active">5b · 4/3 · Active</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=ground">4b · 5/2 · Ground</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=active">4b · 5/2 · Active</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=ground">5b · 5/2 · Ground</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=active">5b · 5/2 · Active</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=ground">4b · 5/3 · Ground</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=active">4b · 5/3 · Active</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=ground">5b · 5/3 · Ground</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=active">5b · 5/3 · Active</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=ground">4b · 5/4 · Ground</a>
-    <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=active">4b · 5/4 · Active</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=ground">5b · 5/4 · Ground</a>
-    <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=active">5b · 5/4 · Active</a>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">3 / 2</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=foundational">4b · Found.</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=3over2&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=foundational">5b · Found.</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=3over2&amp;state=active">5b · Active</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=3over2_2cycle&amp;state=ground">4b · Ground ×2</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=3over2_2cycle&amp;state=active">4b · Active ×2</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=3over2_2cycle&amp;state=ground">5b · Ground ×2</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=3over2_2cycle&amp;state=active">5b · Active ×2</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">332</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=332&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=332&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=332&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=332&amp;state=active">5b · Active</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=332_2cycle&amp;state=ground">4b · Ground ×2</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=332_2cycle&amp;state=active">4b · Active ×2</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=332_2cycle&amp;state=ground">5b · Ground ×2</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=332_2cycle&amp;state=active">5b · Active ×2</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">Clave</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=clave&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=clave&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=clave&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=clave&amp;state=active">5b · Active</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">4 / 3</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=foundational">4b · Found.</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=4over3&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=foundational">5b · Found.</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=active">5b · Active</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">5 / 2</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over2&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over2&amp;state=active">5b · Active</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">5 / 3</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over3&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over3&amp;state=active">5b · Active</a>
+    </div>
+  </div>
+
+  <div class="browse-group">
+    <div class="browse-rhythm-header">5 / 4</div>
+    <div class="browse-links">
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=ground">4b · Ground</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=5over4&amp;state=active">4b · Active</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=ground">5b · Ground</a>
+      <a class="browse-link" href="list.html?balls=5&amp;family=5over4&amp;state=active">5b · Active</a>
+    </div>
   </div>
 </div>
 
 <script>
 const filters = {
   balls:  new Set(['4', '5']),
-  family: new Set(['3over2', '4over3', '5over2', '5over3', '5over4']),
+  family: new Set(['3over2', '4over3', '5over2', '5over3', '5over4', '332', 'clave']),
   state:  new Set(['active', 'ground']),
 };
+
+// Families that also have 2-cycle data files (auto-included when family is selected)
+const TWO_CYCLE_FAMILIES = new Set(['3over2', '332']);
 
 const cache = {};
 let current = null;
@@ -257,7 +325,17 @@ const patternLinksEl  = document.getElementById('pattern-links');
 const jugglingLabLink = document.getElementById('juggling-lab-link');
 const shareBtn        = document.getElementById('share-btn');
 
-const familyLabel = { '3over2': '3 / 2', '4over3': '4 / 3', '5over2': '5 / 2', '5over3': '5 / 3', '5over4': '5 / 4' };
+const familyLabel = {
+  '3over2':        '3 / 2',
+  '3over2_2cycle': '3 / 2 · 2 cycle',
+  '4over3':        '4 / 3',
+  '5over2':        '5 / 2',
+  '5over3':        '5 / 3',
+  '5over4':        '5 / 4',
+  '332':           '332',
+  '332_2cycle':    '332 · 2 cycle',
+  'clave':         'Clave',
+};
 
 // ----- Filter toggle handling -----
 
@@ -323,6 +401,10 @@ async function loadPatterns() {
     for (const family of filters.family) {
       for (const s of filters.state) {
         keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family, state: s });
+        if (TWO_CYCLE_FAMILIES.has(family)) {
+          const f2 = family + '_2cycle';
+          keys.push({ key: dataKey(b, f2, s), balls: parseInt(b), family: f2, state: s });
+        }
       }
     }
   }
@@ -352,7 +434,15 @@ async function loadPatterns() {
 // ----- Pattern helpers -----
 
 function buildUrl(pattern, family) {
-  const bps = { '3over2': 5, '4over3': 7.5, '5over2': 5, '5over3': 7.5, '5over4': 10 }[family] ?? 5;
+  const bps = {
+    '3over2': 5, '3over2_2cycle': 5,
+    '4over3': 7.5,
+    '5over2': 5,
+    '5over3': 7.5,
+    '5over4': 10,
+    '332': 5, '332_2cycle': 5,
+    'clave': 5,
+  }[family] ?? 5;
   return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 

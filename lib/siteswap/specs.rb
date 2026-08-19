@@ -61,6 +61,20 @@ module Siteswap
       right_beats: [0, 3, 6]
     ).freeze
 
+    # Clave — right: [0,3,6,10,12] (3 3 4 2 4), left: [0,4,8,12] (4 4 4 4), period 16
+    CLAVE = SingleCycleSpec.new(
+      period:      16,
+      left_beats:  [0, 4, 8, 12],
+      right_beats: [0, 3, 6, 10, 12]
+    ).freeze
+
+    THREE_THREE_TWO_OVER_FOUR_FOUR_2CYCLE = MultiCycleSpec.new(
+      single_cycle_period: 8,
+      num_cycles:          2,
+      left_beats:          [0, 4, 8, 12],
+      right_beats:         [0, 3, 6, 8, 11, 14]
+    ).freeze
+
     THREE_OVER_TWO        = PolyrhythmSpec.new(right: 3, left: 2).freeze
     THREE_OVER_TWO_2CYCLE = PolyrhythmSpec.new(right: 3, left: 2, cycles: 2).freeze
     FOUR_OVER_THREE       = PolyrhythmSpec.new(right: 4, left: 3).freeze

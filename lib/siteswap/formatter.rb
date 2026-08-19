@@ -26,7 +26,7 @@ class SiteswapFormatter
   end
 
   def fmt_throw(t)
-    s = t.value.to_s(36)
+    s = t.value <= 35 ? t.value.to_s(36) : "{#{t.value}}"
     t.cross ? "#{s}x" : s
   end
 end

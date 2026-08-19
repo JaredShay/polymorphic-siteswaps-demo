@@ -4,10 +4,10 @@ module Siteswap
   module Types
     include Dry.Types()
 
-    # Non-negative integer representable as a single base-36 character.
-    ThrowValue = Strict::Integer.constrained(gteq: 0, lteq: 35)
+    # Non-negative integer siteswap throw value.
+    ThrowValue = Strict::Integer.constrained(gteq: 0)
 
-    # A valid generator throw value: even and in base-36 range.
+    # A valid generator throw value: must be even.
     EvenThrow = ThrowValue.constrained(even: true)
 
     # Validated list of generator throw values.

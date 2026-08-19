@@ -1,11 +1,13 @@
 RSpec.describe SiteswapSimplifier do
   let(:simplifier) { described_class.new }
 
-  BEAT_RE = /\(([0-9a-z]x?),([0-9a-z]x?)\)(!?)/
+  BEAT_RE = /\(([0-9a-z]x?|\{\d+\}x?),([0-9a-z]x?|\{\d+\}x?)\)(!?)/
 
   def parse_throw(s)
-    cross = s.end_with?('x')
-    Siteswap::Notation::Throw.new(value: (cross ? s.chomp('x') : s).to_i(36), cross: cross)
+    cross   = s.end_with?('x')
+    val_str = cross ? s.chomp('x') : s
+    value   = val_str.start_with?('{') ? val_str[1..-2].to_i : val_str.to_i(36)
+    Siteswap::Notation::Throw.new(value: value, cross: cross)
   end
 
   def parse_beat_arr(str)

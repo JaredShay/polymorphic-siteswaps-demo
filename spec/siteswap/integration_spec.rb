@@ -4,8 +4,8 @@ require 'siteswap/formatter'
 require 'siteswap/specs'
 
 # Valid simplified siteswap notation: sync beats (N,M)!?, hand markers R/L,
-# async throws (base-36 digit with optional x suffix), and empty slots (0).
-SITESWAP_NOTATION_RE = /\A[0-9a-z(,)!xRL]+\z/
+# async throws (single char or {N} for values > 35, with optional x suffix), and empty slots (0).
+SITESWAP_NOTATION_RE = /\A[0-9a-z(,)!xRL{}]+\z/
 
 RSpec.describe 'generate → simplify → format integration' do
   let(:simplifier) { SiteswapSimplifier.new }

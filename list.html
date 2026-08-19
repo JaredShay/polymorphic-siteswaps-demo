@@ -66,7 +66,17 @@ const balls   = params.get('balls')  || '4';
 const family  = params.get('family') || '3over2';
 const state   = params.get('state')  || 'ground';
 
-const familyLabel = { '3over2': '3 / 2', '4over3': '4 / 3', '5over2': '5 / 2', '5over3': '5 / 3', '5over4': '5 / 4' };
+const familyLabel = {
+  '3over2':        '3 / 2',
+  '3over2_2cycle': '3 / 2 · 2 cycle',
+  '4over3':        '4 / 3',
+  '5over2':        '5 / 2',
+  '5over3':        '5 / 3',
+  '5over4':        '5 / 4',
+  '332':           '332',
+  '332_2cycle':    '332 · 2 cycle',
+  'clave':         'Clave',
+};
 const stateLabel  = { ground: 'Ground', active: 'Active', foundational: 'Foundational' };
 const title = `${balls} balls · ${familyLabel[family]} · ${stateLabel[state]}`;
 
@@ -74,7 +84,15 @@ document.title = `${title} — Poly Randomizer`;
 document.getElementById('page-title').textContent = title;
 
 function buildJLUrl(pattern) {
-  const bps = { '3over2': 10, '4over3': 15, '5over2': 10, '5over3': 15, '5over4': 20 }[family] ?? 10;
+  const bps = {
+    '3over2': 10, '3over2_2cycle': 10,
+    '4over3': 15,
+    '5over2': 10,
+    '5over3': 15,
+    '5over4': 20,
+    '332': 10, '332_2cycle': 10,
+    'clave': 10,
+  }[family] ?? 10;
   return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 

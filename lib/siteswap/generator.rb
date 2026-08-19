@@ -61,8 +61,7 @@ class PolymorphicSiteswaps
     simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
   )
-    # ThrowList enforces: non-empty, each value is even and ≤ 35 (single base-36 char).
-    raise ArgumentError, "throw values must be even and ≤ 35" unless Siteswap::Types::ThrowList.valid?(throws)
+    raise ArgumentError, "throw values must be even" unless Siteswap::Types::ThrowList.valid?(throws)
 
     @period              = period
     @left_beats          = left_beats
