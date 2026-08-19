@@ -78,6 +78,7 @@ module Siteswap
     THREE_OVER_TWO        = PolyrhythmSpec.new(right: 3, left: 2).freeze
     THREE_OVER_TWO_2CYCLE = PolyrhythmSpec.new(right: 3, left: 2, cycles: 2).freeze
     FOUR_OVER_THREE       = PolyrhythmSpec.new(right: 4, left: 3).freeze
+    FOUR_OVER_THREE_2CYCLE = PolyrhythmSpec.new(right: 4, left: 3, cycles: 2).freeze
     FIVE_OVER_TWO         = PolyrhythmSpec.new(right: 5, left: 2).freeze
     FIVE_OVER_THREE       = PolyrhythmSpec.new(right: 5, left: 3).freeze
     FIVE_OVER_FOUR        = PolyrhythmSpec.new(right: 5, left: 4).freeze

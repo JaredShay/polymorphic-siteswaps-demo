@@ -213,6 +213,13 @@
       <button class="toggle on" data-group="state" data-value="ground">Ground</button>
     </div>
   </div>
+  <div class="filter-row">
+    <span class="filter-label">Cycles</span>
+    <div class="toggle-group">
+      <button class="toggle on" data-group="cycles" data-value="1">1</button>
+      <button class="toggle on" data-group="cycles" data-value="2">2</button>
+    </div>
+  </div>
 </div>
 
 <button id="randomize-btn">Randomize</button>
@@ -269,6 +276,8 @@
       <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=foundational">5b · Found.</a>
       <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=ground">5b · Ground</a>
       <a class="browse-link" href="list.html?balls=5&amp;family=4over3&amp;state=active">5b · Active</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=4over3_2cycle&amp;state=ground">4b · Ground ×2</a>
+      <a class="browse-link" href="list.html?balls=4&amp;family=4over3_2cycle&amp;state=active">4b · Active ×2</a>
     </div>
   </div>
 
@@ -308,10 +317,11 @@ const filters = {
   balls:  new Set(['4', '5']),
   family: new Set(['3over2', '4over3', '5over2', '5over3', '5over4', '332', 'clave']),
   state:  new Set(['active', 'ground']),
+  cycles: new Set(['1', '2']),
 };
 
-// Families that also have 2-cycle data files (auto-included when family is selected)
-const TWO_CYCLE_FAMILIES = new Set(['3over2', '332']);
+// Families that have 2-cycle data files
+const TWO_CYCLE_FAMILIES = new Set(['3over2', '4over3', '332']);
 
 const cache = {};
 let current = null;
@@ -329,6 +339,7 @@ const familyLabel = {
   '3over2':        '3 / 2',
   '3over2_2cycle': '3 / 2 · 2 cycle',
   '4over3':        '4 / 3',
+  '4over3_2cycle': '4 / 3 · 2 cycle',
   '5over2':        '5 / 2',
   '5over3':        '5 / 3',
   '5over4':        '5 / 4',
@@ -373,6 +384,7 @@ function updateUrl() {
     `fb=${[...filters.balls].join(',')}`,
     `ff=${[...filters.family].join(',')}`,
     `fs=${[...filters.state].join(',')}`,
+    `fc=${[...filters.cycles].join(',')}`,
   ].filter(Boolean).join('&');
   history.pushState(null, '', '?' + qs);
 }
@@ -382,6 +394,7 @@ function readUrlParams() {
   if (params.has('fb')) filters.balls  = new Set(params.get('fb').split(','));
   if (params.has('ff')) filters.family = new Set(params.get('ff').split(','));
   if (params.has('fs')) filters.state  = new Set(params.get('fs').split(','));
+  if (params.has('fc')) filters.cycles = new Set(params.get('fc').split(','));
   syncFilterButtons();
   if (params.has('p') && params.has('b') && params.has('f')) {
     return { base: params.get('p'), balls: parseInt(params.get('b')), family: params.get('f'), state: params.get('s') || '' };
@@ -400,8 +413,10 @@ async function loadPatterns() {
   for (const b of filters.balls) {
     for (const family of filters.family) {
       for (const s of filters.state) {
-        keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family, state: s });
-        if (TWO_CYCLE_FAMILIES.has(family)) {
+        if (filters.cycles.has('1')) {
+          keys.push({ key: dataKey(b, family, s), balls: parseInt(b), family, state: s });
+        }
+        if (filters.cycles.has('2') && TWO_CYCLE_FAMILIES.has(family)) {
           const f2 = family + '_2cycle';
           keys.push({ key: dataKey(b, f2, s), balls: parseInt(b), family: f2, state: s });
         }
@@ -436,7 +451,7 @@ async function loadPatterns() {
 function buildUrl(pattern, family) {
   const bps = {
     '3over2': 5, '3over2_2cycle': 5,
-    '4over3': 7.5,
+    '4over3': 7.5, '4over3_2cycle': 7.5,
     '5over2': 5,
     '5over3': 7.5,
     '5over4': 10,

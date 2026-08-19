@@ -8,6 +8,7 @@ CONFIGS = [
   { balls: 5, family: '3over2_2cycle', spec: Siteswap::Specs::THREE_OVER_TWO_2CYCLE,                 throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18], sample_limit: 50 },
   { balls: 4, family: '4over3',        spec: Siteswap::Specs::FOUR_OVER_THREE,                       throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] },
   { balls: 5, family: '4over3',        spec: Siteswap::Specs::FOUR_OVER_THREE,                       throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
+  { balls: 4, family: '4over3_2cycle', spec: Siteswap::Specs::FOUR_OVER_THREE_2CYCLE,                throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18], sample_limit: 50 },
   { balls: 4, family: '5over2',        spec: Siteswap::Specs::FIVE_OVER_TWO,                         throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
   { balls: 5, family: '5over2',        spec: Siteswap::Specs::FIVE_OVER_TWO,                         throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] },
   { balls: 4, family: '5over3',        spec: Siteswap::Specs::FIVE_OVER_THREE,                       throws: [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
