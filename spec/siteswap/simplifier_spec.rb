@@ -13,7 +13,7 @@ RSpec.describe SiteswapSimplifier do
   end
 
   describe 'known patterns' do
-    subject(:result) { SiteswapFormatter.new.format(simplifier.simplify(input)) }
+    subject(:result) { SiteswapFormatter.new.format(simplifier.simplify(input).elements) }
 
     context 'ground state' do
       context '3/2 – first known good' do
@@ -37,6 +37,24 @@ RSpec.describe SiteswapSimplifier do
 
         it 'produces the expected notation' do
           expect(result).to eq("(4x,6)R4x640")
+        end
+      end
+    end
+
+    context '4/3 patterns' do
+      context '4/3 – first ground' do
+        let(:input) { parse_beat_arr("(cx,gx)(0,0)(0,0)(0,c)(g,0)(0,0)(0,c)(0,0)(ex,0)(0,ex)(0,0)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(6x,8x)0R680R60L7700")
+        end
+      end
+
+      context '4/3 – second ground' do
+        let(:input) { parse_beat_arr("(cx,gx)(0,0)(0,0)(0,c)(g,0)(0,0)(0,c)(0,0)(g,0)(0,c)(0,0)(0,0)") }
+
+        it 'produces the expected notation' do
+          expect(result).to eq("(6x,8x)0R680R60L8600")
         end
       end
     end

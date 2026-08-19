@@ -93,7 +93,7 @@ class PolymorphicSiteswaps
   end
 
   def format_patterns(patterns)
-    patterns.map { |beat_arr| formatter.format(simplifier.simplify(beat_arr)) }
+    patterns.map { |beat_arr| formatter.format(simplifier.simplify(beat_arr).elements) }
   end
 
   def partition_by_ground_state(patterns)
