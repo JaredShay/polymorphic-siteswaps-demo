@@ -65,6 +65,47 @@
     max-width: 480px;
     min-height: 1.2em;
   }
+  .pattern-beats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+  }
+  .beat-rest {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    color: #555;
+    padding: 0 4px;
+  }
+  .beat-left,
+  .beat-right,
+  .beat-sync {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .beat-left {
+    color: #5ba4ff;
+    background: rgba(74, 140, 255, 0.1);
+    border: 1px solid rgba(74, 140, 255, 0.25);
+  }
+  .beat-right {
+    color: #ff9e4a;
+    background: rgba(255, 140, 60, 0.1);
+    border: 1px solid rgba(255, 140, 60, 0.25);
+  }
+  .beat-sync {
+    background: rgba(90, 50, 140, 0.15);
+    border: 1px solid rgba(90, 50, 140, 0.35);
+    gap: 2px;
+  }
+  .beat-sync .t-l { color: #5ba4ff; }
+  .beat-sync .sep { color: #555; }
+  .beat-sync .t-r { color: #ff9e4a; }
   #filters {
     display: flex;
     flex-direction: column;
@@ -328,6 +369,20 @@ const cache = {};
 let current = null;
 let showingSimplified = false;
 
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderBeats(beats) {
+  const html = beats.map(b => {
+    if (b.kind === 'rest')  return '<span class="beat beat-rest">·</span>';
+    if (b.kind === 'left')  return `<span class="beat beat-left">${escHtml(b.left)}</span>`;
+    if (b.kind === 'right') return `<span class="beat beat-right">${escHtml(b.right)}</span>`;
+    return `<span class="beat beat-sync"><span class="t-l">${escHtml(b.left)}</span><span class="sep">,</span><span class="t-r">${escHtml(b.right)}</span></span>`;
+  }).join('');
+  patternEl.innerHTML = `<div class="pattern-beats">${html}</div>`;
+}
+
 const gif               = document.getElementById('gif');
 const statusEl          = document.getElementById('status');
 const patternInfoEl     = document.getElementById('pattern-info');
@@ -380,7 +435,13 @@ document.querySelectorAll('.toggle[data-group]').forEach(el => {
 simplifiedToggle.addEventListener('click', () => {
   showingSimplified = !showingSimplified;
   simplifiedToggle.classList.toggle('on', showingSimplified);
-  patternEl.textContent = showingSimplified ? current.simplified : current.halved;
+  if (showingSimplified) {
+    patternEl.textContent = current.simplified;
+  } else if (current.beats) {
+    renderBeats(current.beats);
+  } else {
+    patternEl.textContent = current.halved;
+  }
 });
 
 // ----- URL state -----
@@ -477,12 +538,16 @@ function buildUrl(simplified, family) {
 
 // ----- Display pattern -----
 
-function displayPattern(halved, simplified, balls, family, state) {
-  current = { halved, simplified, balls, family, state };
+function displayPattern(halved, simplified, balls, family, state, beats = null) {
+  current = { halved, simplified, balls, family, state, beats };
 
   showingSimplified = false;
   simplifiedToggle.classList.remove('on');
-  patternEl.textContent = halved;
+  if (beats) {
+    renderBeats(beats);
+  } else {
+    patternEl.textContent = halved;
+  }
 
   const stateLabel = state ? (state.charAt(0).toUpperCase() + state.slice(1)) : '';
   patternInfoEl.textContent = `${balls}b · ${familyLabel[family] || family}${stateLabel ? ' · ' + stateLabel : ''}`;
@@ -535,8 +600,8 @@ async function randomize() {
     return;
   }
 
-  const { halved, simplified, balls, family, state } = pool[Math.floor(Math.random() * pool.length)];
-  displayPattern(halved, simplified, balls, family, state);
+  const { halved, simplified, beats, balls, family, state } = pool[Math.floor(Math.random() * pool.length)];
+  displayPattern(halved, simplified, balls, family, state, beats);
   updateUrl();
 }
 
@@ -544,9 +609,29 @@ randBtn.addEventListener('click', randomize);
 
 // ----- Init -----
 
+async function initFromUrl(urlPattern) {
+  const { halved, simplified, balls, family, state } = urlPattern;
+  if (state) {
+    const key = dataKey(balls, family, state);
+    try {
+      const resp = await fetch(key);
+      if (resp.ok) {
+        const patterns = await resp.json();
+        cache[key] = patterns;
+        const match = patterns.find(p => p.simplified === simplified);
+        if (match) {
+          displayPattern(match.halved, match.simplified, balls, family, state, match.beats);
+          return;
+        }
+      }
+    } catch {}
+  }
+  displayPattern(halved, simplified, balls, family, state);
+}
+
 const urlPattern = readUrlParams();
 if (urlPattern) {
-  displayPattern(urlPattern.halved, urlPattern.simplified, urlPattern.balls, urlPattern.family, urlPattern.state);
+  initFromUrl(urlPattern);
 } else {
   randomize();
 }
