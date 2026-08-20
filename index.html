@@ -183,6 +183,7 @@
 <div id="pattern"></div>
 <div id="pattern-links">
   <a id="juggling-lab-link" href="#" target="_blank" rel="noopener">JugglingLab ↗</a>
+  <button id="simplified-toggle" class="toggle">Simplified</button>
   <button id="share-btn">Copy link</button>
 </div>
 
@@ -325,15 +326,17 @@ const TWO_CYCLE_FAMILIES = new Set(['3over2', '4over3', '332']);
 
 const cache = {};
 let current = null;
+let showingSimplified = false;
 
-const gif             = document.getElementById('gif');
-const statusEl        = document.getElementById('status');
-const patternInfoEl   = document.getElementById('pattern-info');
-const patternEl       = document.getElementById('pattern');
-const randBtn         = document.getElementById('randomize-btn');
-const patternLinksEl  = document.getElementById('pattern-links');
-const jugglingLabLink = document.getElementById('juggling-lab-link');
-const shareBtn        = document.getElementById('share-btn');
+const gif               = document.getElementById('gif');
+const statusEl          = document.getElementById('status');
+const patternInfoEl     = document.getElementById('pattern-info');
+const patternEl         = document.getElementById('pattern');
+const randBtn           = document.getElementById('randomize-btn');
+const patternLinksEl    = document.getElementById('pattern-links');
+const jugglingLabLink   = document.getElementById('juggling-lab-link');
+const simplifiedToggle  = document.getElementById('simplified-toggle');
+const shareBtn          = document.getElementById('share-btn');
 
 const familyLabel = {
   '3over2':        '3 / 2',
@@ -372,12 +375,21 @@ document.querySelectorAll('.toggle[data-group]').forEach(el => {
   });
 });
 
+// ----- Simplified toggle -----
+
+simplifiedToggle.addEventListener('click', () => {
+  showingSimplified = !showingSimplified;
+  simplifiedToggle.classList.toggle('on', showingSimplified);
+  patternEl.textContent = showingSimplified ? current.simplified : current.halved;
+});
+
 // ----- URL state -----
 
 function updateUrl() {
   if (!current) return;
   const qs = [
-    `p=${current.base}`,
+    `p=${current.simplified}`,
+    `ph=${current.halved}`,
     `b=${current.balls}`,
     `f=${current.family}`,
     current.state ? `s=${current.state}` : '',
@@ -397,7 +409,9 @@ function readUrlParams() {
   if (params.has('fc')) filters.cycles = new Set(params.get('fc').split(','));
   syncFilterButtons();
   if (params.has('p') && params.has('b') && params.has('f')) {
-    return { base: params.get('p'), balls: parseInt(params.get('b')), family: params.get('f'), state: params.get('s') || '' };
+    const simplified = params.get('p');
+    const halved = params.get('ph') || simplified;
+    return { halved, simplified, balls: parseInt(params.get('b')), family: params.get('f'), state: params.get('s') || '' };
   }
   return null;
 }
@@ -405,7 +419,7 @@ function readUrlParams() {
 // ----- Data loading -----
 
 function dataKey(balls, family, state) {
-  return `data/${balls}b_${family}_${state}.txt`;
+  return `data/${balls}b_${family}_${state}.json`;
 }
 
 async function loadPatterns() {
@@ -430,7 +444,7 @@ async function loadPatterns() {
       .map(async ({ key }) => {
         try {
           const resp = await fetch(key);
-          cache[key] = resp.ok ? (await resp.text()).split('\n').filter(l => l && !l.startsWith('#')) : [];
+          cache[key] = resp.ok ? await resp.json() : [];
         } catch {
           cache[key] = [];
         }
@@ -440,7 +454,7 @@ async function loadPatterns() {
   const pool = [];
   for (const { key, balls, family, state } of keys) {
     for (const pattern of (cache[key] || [])) {
-      pool.push({ pattern, balls, family, state });
+      pool.push({ ...pattern, balls, family, state });
     }
   }
   return pool;
@@ -448,7 +462,7 @@ async function loadPatterns() {
 
 // ----- Pattern helpers -----
 
-function buildUrl(pattern, family) {
+function buildUrl(simplified, family) {
   const bps = {
     '3over2': 5, '3over2_2cycle': 5,
     '4over3': 7.5, '4over3_2cycle': 7.5,
@@ -458,19 +472,22 @@ function buildUrl(pattern, family) {
     '332': 5, '332_2cycle': 5,
     'clave': 5,
   }[family] ?? 5;
-  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
+  return `https://jugglinglab.org/anim?pattern=${simplified};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 
 // ----- Display pattern -----
 
-function displayPattern(base, balls, family, state) {
-  current = { base, balls, family, state };
+function displayPattern(halved, simplified, balls, family, state) {
+  current = { halved, simplified, balls, family, state };
+
+  showingSimplified = false;
+  simplifiedToggle.classList.remove('on');
+  patternEl.textContent = halved;
 
   const stateLabel = state ? (state.charAt(0).toUpperCase() + state.slice(1)) : '';
   patternInfoEl.textContent = `${balls}b · ${familyLabel[family] || family}${stateLabel ? ' · ' + stateLabel : ''}`;
-  patternEl.textContent = base;
 
-  const url = buildUrl(base, family);
+  const url = buildUrl(simplified, family);
   jugglingLabLink.href = url;
   patternLinksEl.style.display = 'flex';
 
@@ -518,8 +535,8 @@ async function randomize() {
     return;
   }
 
-  const { pattern: base, balls, family, state } = pool[Math.floor(Math.random() * pool.length)];
-  displayPattern(base, balls, family, state);
+  const { halved, simplified, balls, family, state } = pool[Math.floor(Math.random() * pool.length)];
+  displayPattern(halved, simplified, balls, family, state);
   updateUrl();
 }
 
@@ -529,7 +546,7 @@ randBtn.addEventListener('click', randomize);
 
 const urlPattern = readUrlParams();
 if (urlPattern) {
-  displayPattern(urlPattern.base, urlPattern.balls, urlPattern.family, urlPattern.state);
+  displayPattern(urlPattern.halved, urlPattern.simplified, urlPattern.balls, urlPattern.family, urlPattern.state);
 } else {
   randomize();
 }

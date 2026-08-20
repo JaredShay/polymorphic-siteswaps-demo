@@ -1,3 +1,4 @@
+require 'json'
 require_relative '../lib/siteswap/generator'
 require_relative '../lib/siteswap/specs'
 
@@ -10,13 +11,13 @@ FOUNDATIONAL_SPECS = [
 ].freeze
 
 def write_file(path, patterns)
-  File.write(path, patterns.join("\n"))
+  File.write(path, JSON.generate(patterns))
   $stdout.puts "#{path}: #{patterns.size}"
 end
 
 FOUNDATIONAL_SPECS.each do |cfg|
   cfg[:balls].each do |balls|
     result = PolymorphicSiteswaps.generate(**cfg[:spec], number_of_balls: balls, throws: cfg[:throws])
-    write_file("data/#{balls}b_#{cfg[:family]}_foundational.txt", result[:ground].sort)
+    write_file("data/#{balls}b_#{cfg[:family]}_foundational.json", result[:ground].sort_by { |h| h[:simplified] })
   end
 end

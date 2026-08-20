@@ -6,8 +6,12 @@ require_relative 'formatter'
 class PolymorphicSiteswaps
   Throw = Siteswap::Notation::Throw
 
-  DEFAULT_SIMPLIFIER = SiteswapSimplifier.new.freeze
-  DEFAULT_FORMATTER  = SiteswapFormatter.new.freeze
+  DEFAULT_FORMATTER = SiteswapMultiFormatter.new(
+    presets: {
+      halved:     SiteswapSimplifier::PRESETS[:halved],
+      simplified: SiteswapSimplifier::PRESETS[:full],
+    }
+  ).freeze
 
   def self.generate(
     period: nil,
@@ -20,7 +24,6 @@ class PolymorphicSiteswaps
     ground_limit: nil,
     active_limit: nil,
     debug: false,
-    simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
   )
     resolved_period = single_cycle_period && num_cycles ? single_cycle_period * num_cycles : period
@@ -37,7 +40,6 @@ class PolymorphicSiteswaps
       ground_limit: ground_limit,
       active_limit: active_limit,
       debug: debug,
-      simplifier: simplifier,
       formatter: formatter
     ).generate
   end
@@ -52,7 +54,6 @@ class PolymorphicSiteswaps
     :ground_limit,
     :active_limit,
     :debug,
-    :simplifier,
     :formatter
 
   def initialize(
@@ -66,7 +67,6 @@ class PolymorphicSiteswaps
     ground_limit: nil,
     active_limit: nil,
     debug: false,
-    simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
   )
     raise ArgumentError, "throw values must be even" unless Siteswap::Types::ThrowList.valid?(throws)
@@ -81,7 +81,6 @@ class PolymorphicSiteswaps
     @ground_limit        = ground_limit
     @active_limit        = active_limit
     @debug               = debug
-    @simplifier          = simplifier
     @formatter           = formatter
   end
 
@@ -96,7 +95,7 @@ class PolymorphicSiteswaps
   private
 
   def format_patterns(patterns)
-    patterns.map { |beat_arr| formatter.format(simplifier.simplify(beat_arr).elements) }
+    patterns.map { |beat_arr| formatter.format(beat_arr) }
   end
 
   # Compute the theoretical ground state analytically: the N lowest-rel valid

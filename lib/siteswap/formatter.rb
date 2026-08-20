@@ -30,3 +30,31 @@ class SiteswapFormatter
     t.cross ? "#{s}x" : s
   end
 end
+
+# Formats a raw beat array into a hash of named string representations,
+# applying a separate transform pipeline per preset.
+#
+# Each preset entry maps a name to an array of transforms (e.g. from
+# SiteswapSimplifier::PRESETS). The result is a plain Hash keyed by those names.
+#
+#   formatter = SiteswapMultiFormatter.new(
+#     presets: { halved: [HALVE], simplified: [HALVE, CANCEL_PAIRS, EXPAND] }
+#   )
+#   formatter.format(beat_arr)
+#   # => { halved: "(4x,6)!...", simplified: "(4x,6)R4x550" }
+class SiteswapMultiFormatter
+  SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
+
+  def initialize(presets:, formatter: SiteswapFormatter.new)
+    @presets   = presets
+    @formatter = formatter
+  end
+
+  def format(beat_arr)
+    raw = beat_arr.map { |l, r| SuppressedSyncBeat.new(left: l, right: r) }
+    @presets.transform_values do |transforms|
+      elements = transforms.reduce(raw) { |els, t| t.call(els) }
+      @formatter.format(elements)
+    end
+  end
+end

@@ -1,5 +1,6 @@
 RSpec.describe SiteswapSimplifier do
   let(:simplifier) { described_class.new }
+  let(:formatter)  { SiteswapFormatter.new }
 
   BEAT_RE = /\(([0-9a-z]x?|\{\d+\}x?),([0-9a-z]x?|\{\d+\}x?)\)(!?)/
 
@@ -15,7 +16,7 @@ RSpec.describe SiteswapSimplifier do
   end
 
   describe 'known patterns' do
-    subject(:result) { SiteswapFormatter.new.format(simplifier.simplify(input).elements) }
+    subject(:result) { formatter.format(simplifier.simplify(input).elements) }
 
     context 'ground state' do
       context '3/2 – first known good' do

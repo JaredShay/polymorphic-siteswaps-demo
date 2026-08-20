@@ -1,3 +1,4 @@
+require 'json'
 require_relative 'lib/siteswap/generator'
 require_relative 'lib/siteswap/specs'
 
@@ -37,8 +38,8 @@ CONFIGS.each do |cfg|
 
   base = "data/#{cfg[:balls]}b_#{cfg[:family]}"
   [:ground, :active].each do |category|
-    path = "#{base}_#{category}.txt"
-    File.write(path, result[category].join("\n"))
+    path = "#{base}_#{category}.json"
+    File.write(path, JSON.generate(result[category]))
     $stdout.puts "#{path}: #{result[category].size}"
   end
   $stdout.flush

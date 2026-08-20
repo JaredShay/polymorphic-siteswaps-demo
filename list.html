@@ -83,7 +83,7 @@ const title = `${balls} balls · ${familyLabel[family]} · ${stateLabel[state]}`
 document.title = `${title} — Poly Randomizer`;
 document.getElementById('page-title').textContent = title;
 
-function buildJLUrl(pattern) {
+function buildJLUrl(simplified) {
   const bps = {
     '3over2': 5, '3over2_2cycle': 5,
     '4over3': 7.5, '4over3_2cycle': 7.5,
@@ -93,41 +93,40 @@ function buildJLUrl(pattern) {
     '332': 5, '332_2cycle': 5,
     'clave': 5,
   }[family] ?? 5;
-  return `https://jugglinglab.org/anim?pattern=${pattern};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
+  return `https://jugglinglab.org/anim?pattern=${simplified};bps=${bps};dwell=1.5;colors={109,50,168};fps=50`;
 }
 
-function buildHomeUrl(pattern) {
-  return `index.html?p=${pattern}&b=${balls}&f=${family}&s=${state}`;
+function buildHomeUrl(simplified, halved) {
+  return `index.html?p=${simplified}&ph=${halved}&b=${balls}&f=${family}&s=${state}`;
 }
 
 async function load() {
   const subtitleEl = document.getElementById('subtitle');
   try {
-    const resp = await fetch(`data/${balls}b_${family}_${state}.txt`);
+    const resp = await fetch(`data/${balls}b_${family}_${state}.json`);
     if (!resp.ok) throw new Error();
-    const lines = (await resp.text()).split('\n');
-    const patterns = lines.filter(Boolean);
+    const patterns = await resp.json();
     subtitleEl.textContent = `${patterns.length} patterns`;
 
     const list = document.getElementById('list');
-    for (const pattern of patterns) {
+    for (const { halved, simplified } of patterns) {
       const row = document.createElement('div');
       row.className = 'pattern-row';
 
       const str = document.createElement('span');
       str.className = 'pattern-str';
-      str.textContent = pattern;
+      str.textContent = halved;
 
       const jlLink = document.createElement('a');
       jlLink.className = 'pattern-link';
-      jlLink.href = buildJLUrl(pattern);
+      jlLink.href = buildJLUrl(simplified);
       jlLink.target = '_blank';
       jlLink.rel = 'noopener';
       jlLink.textContent = 'JugglingLab ↗';
 
       const homeLink = document.createElement('a');
       homeLink.className = 'pattern-link';
-      homeLink.href = buildHomeUrl(pattern);
+      homeLink.href = buildHomeUrl(simplified, halved);
       homeLink.textContent = 'Try it →';
 
       row.appendChild(str);

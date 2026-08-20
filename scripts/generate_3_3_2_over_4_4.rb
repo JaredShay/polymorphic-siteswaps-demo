@@ -8,9 +8,10 @@ throws = [0, 2, 4, 6, 8, 10, 12, 14, 16]
 result = PolymorphicSiteswaps.generate(
   **spec.to_hash,
   number_of_balls: 4,
-  throws: throws,
-  simplifier: SiteswapSimplifier.new(verbose: true)
+  throws: throws
 )
 
-puts "ground: #{result[:ground]}"
-puts "active: #{result[:active]}"
+puts "ground (#{result[:ground].size}):"
+result[:ground].each { |h| puts "  #{h[:halved]}  |  #{h[:simplified]}" }
+puts "active (#{result[:active].size}):"
+result[:active].each { |h| puts "  #{h[:halved]}  |  #{h[:simplified]}" }

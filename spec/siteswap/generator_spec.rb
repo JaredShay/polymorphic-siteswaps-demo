@@ -1,6 +1,6 @@
 RSpec.describe PolymorphicSiteswaps do
   describe '.generate' do
-    it 'returns a hash with :ground and :active arrays of strings' do
+    it 'returns a hash with :ground and :active arrays of formatted pattern hashes' do
       result = described_class.generate(
         **Siteswap::Specs::THREE_OVER_TWO,
         number_of_balls: 4,
@@ -9,7 +9,8 @@ RSpec.describe PolymorphicSiteswaps do
       expect(result).to include(:ground, :active)
       expect(result[:ground]).to be_an(Array)
       expect(result[:active]).to be_an(Array)
-      expect(result[:ground].first).to be_a(String)
+      expect(result[:ground].first).to be_a(Hash)
+      expect(result[:ground].first).to include(:halved, :simplified)
     end
 
     it 'raises ArgumentError for odd throw values' do
