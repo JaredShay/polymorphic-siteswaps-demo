@@ -249,9 +249,9 @@ class PolymorphicSiteswaps
     @seen[mirror_key] = true unless mirror_key == key
 
     if beat_state(beat_arr) == @ground_state
-      @ground_results << beat_arr
+      @ground_results << beat_arr unless @ground_limit && @ground_results.size >= @ground_limit
     else
-      @active_results << beat_arr
+      @active_results << beat_arr unless @active_limit && @active_results.size >= @active_limit
     end
   end
 

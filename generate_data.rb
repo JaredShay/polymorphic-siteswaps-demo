@@ -23,26 +23,23 @@ CONFIGS = [
   { balls: 5, family: 'clave',         spec: Siteswap::Specs::CLAVE,                                 throws: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] },
 ].freeze
 
-DEFAULT_SAMPLE_LIMIT = 200
-
-def write_patterns(path, patterns, limit:)
-  total = patterns.size
-  if total > limit
-    sampled = patterns.sample(limit)
-    File.write(path, "#total=#{total}\n" + sampled.join("\n"))
-    $stdout.puts "#{path}: #{limit} (sample of #{total})"
-  else
-    File.write(path, patterns.join("\n"))
-    $stdout.puts "#{path}: #{total}"
-  end
-end
+DEFAULT_LIMIT = 200
 
 CONFIGS.each do |cfg|
-  result = PolymorphicSiteswaps.generate(**cfg[:spec], number_of_balls: cfg[:balls], throws: cfg[:throws])
-  limit  = cfg[:sample_limit] || DEFAULT_SAMPLE_LIMIT
+  limit  = cfg[:sample_limit] || DEFAULT_LIMIT
+  result = PolymorphicSiteswaps.generate(
+    **cfg[:spec],
+    number_of_balls: cfg[:balls],
+    throws:          cfg[:throws],
+    ground_limit:    limit,
+    active_limit:    limit
+  )
 
   base = "data/#{cfg[:balls]}b_#{cfg[:family]}"
-  write_patterns("#{base}_ground.txt", result[:ground], limit: limit)
-  write_patterns("#{base}_active.txt", result[:active], limit: limit)
+  [:ground, :active].each do |category|
+    path = "#{base}_#{category}.txt"
+    File.write(path, result[category].join("\n"))
+    $stdout.puts "#{path}: #{result[category].size}"
+  end
   $stdout.flush
 end

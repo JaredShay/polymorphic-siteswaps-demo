@@ -106,14 +106,8 @@ async function load() {
     const resp = await fetch(`data/${balls}b_${family}_${state}.txt`);
     if (!resp.ok) throw new Error();
     const lines = (await resp.text()).split('\n');
-    let totalCount = null;
-    const patterns = lines.filter(l => {
-      if (l.startsWith('#total=')) { totalCount = parseInt(l.slice(7)); return false; }
-      return Boolean(l);
-    });
-    subtitleEl.textContent = totalCount
-      ? `${patterns.length} patterns (random sample of ${totalCount})`
-      : `${patterns.length} patterns`;
+    const patterns = lines.filter(Boolean);
+    subtitleEl.textContent = `${patterns.length} patterns`;
 
     const list = document.getElementById('list');
     for (const pattern of patterns) {
