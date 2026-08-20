@@ -17,6 +17,8 @@ class PolymorphicSiteswaps
     throws:,
     single_cycle_period: nil,
     num_cycles: nil,
+    ground_limit: nil,
+    active_limit: nil,
     debug: false,
     simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
@@ -32,6 +34,8 @@ class PolymorphicSiteswaps
       throws: throws,
       single_cycle_period: single_cycle_period,
       num_cycles: num_cycles,
+      ground_limit: ground_limit,
+      active_limit: active_limit,
       debug: debug,
       simplifier: simplifier,
       formatter: formatter
@@ -45,6 +49,8 @@ class PolymorphicSiteswaps
     :throws,
     :single_cycle_period,
     :num_cycles,
+    :ground_limit,
+    :active_limit,
     :debug,
     :simplifier,
     :formatter
@@ -57,6 +63,8 @@ class PolymorphicSiteswaps
     throws:,
     single_cycle_period: nil,
     num_cycles: nil,
+    ground_limit: nil,
+    active_limit: nil,
     debug: false,
     simplifier: DEFAULT_SIMPLIFIER,
     formatter: DEFAULT_FORMATTER
@@ -70,37 +78,45 @@ class PolymorphicSiteswaps
     @throws              = throws
     @single_cycle_period = single_cycle_period
     @num_cycles          = num_cycles
+    @ground_limit        = ground_limit
+    @active_limit        = active_limit
     @debug               = debug
     @simplifier          = simplifier
     @formatter           = formatter
   end
 
   def generate
-    categorize(search)
-  end
-
-  private
-
-  def categorize(patterns)
-    crossing       = patterns.select { |b| has_cross?(b) }
-    ground, active = partition_by_ground_state(crossing)
-
+    ground, active = search
     {
       ground: format_patterns(ground),
       active: format_patterns(active),
     }
   end
 
+  private
+
   def format_patterns(patterns)
     patterns.map { |beat_arr| formatter.format(simplifier.simplify(beat_arr).elements) }
   end
 
-  def partition_by_ground_state(patterns)
-    return [[], []] if patterns.empty?
+  # Compute the theoretical ground state analytically: the N lowest-rel valid
+  # state slots given the beat structure. State slots correspond to (beat, hand)
+  # pairs from the throw schedule; the ground state fills them from the bottom up.
+  #
+  # This is O(number_of_balls) and runs once before the DFS.
+  def compute_ground_state
+    slots = (left_beats.map { |b| [b, 0] } + right_beats.map { |b| [b, 1] }).sort_by { |b, h| [b, h] }
 
-    by_state     = patterns.group_by { |b| beat_state(b) }
-    ground_state = by_state.keys.min_by { |s| s.sum { |rel, _| rel } }
-    patterns.partition { |b| beat_state(b) == ground_state }
+    result = []
+    cycle  = 0
+    while result.size < number_of_balls
+      slots.each do |b, h|
+        result << [b + cycle * period, h]
+        break if result.size == number_of_balls
+      end
+      cycle += 1
+    end
+    result
   end
 
   # The patterns generated here are not interesting if they don't have crossing
@@ -123,10 +139,12 @@ class PolymorphicSiteswaps
   # crosses (e.g. 2x landing directly on an active beat) are allowed, as jugglers
   # can accommodate fast throws with dwell time adjustments.
   def search
-    t0       = Time.now
-    @results = []
-    @seen    = {}
-    @nodes   = 0
+    t0              = Time.now
+    @ground_results = []
+    @active_results = []
+    @seen           = {}
+    @nodes          = 0
+    @ground_state   = compute_ground_state
     slots  = strict_throw_slots
     holes  = init_holes(slots)
     chosen = Array.new(slots.size)
@@ -146,8 +164,8 @@ class PolymorphicSiteswaps
     end
 
     fill_slot(slots, 0, holes, chosen, 0)
-    log_timing(t0, @nodes, @results.size) if debug
-    @results
+    log_timing(t0, @nodes, @ground_results.size + @active_results.size) if debug
+    [@ground_results, @active_results]
   end
 
   # Left hand at left_beats, right hand at right_beats.
@@ -168,6 +186,8 @@ class PolymorphicSiteswaps
   end
 
   def fill_slot(slots, k, holes, chosen, sum)
+    return if limited? && limits_satisfied?
+
     @nodes += 1
 
     # Multi-cycle pruning: at each intermediate cycle boundary, verify that at
@@ -191,9 +211,10 @@ class PolymorphicSiteswaps
     # 2*period are reachable. Two different values may land at the same slot
     # (e.g. v=2 and v=14 in a period-6 pattern both land at beat+1); they are
     # distinct throws — same timing, different height — and both are generated.
-    throws.each do |v|
+    throw_order = limited? ? throws.shuffle : throws
+    throw_order.each do |v|
       next if v.zero?
-      [false, true].each do |cross|
+      (limited? ? [false, true].shuffle : [false, true]).each do |cross|
         lh = cross ? hand ^ 1 : hand
         lb = (beat + v / 2) % period
         next if holes[lb][lh].zero?
@@ -219,12 +240,28 @@ class PolymorphicSiteswaps
   end
 
   def add_result(beat_arr)
+    return unless has_cross?(beat_arr)
+
     key = sync_unparse(canonical_rotation(beat_arr))
     return if @seen[key]
     @seen[key] = true
     mirror_key = sync_unparse(canonical_rotation(mirror(beat_arr)))
     @seen[mirror_key] = true unless mirror_key == key
-    @results << beat_arr
+
+    if beat_state(beat_arr) == @ground_state
+      @ground_results << beat_arr
+    else
+      @active_results << beat_arr
+    end
+  end
+
+  def limited?
+    @ground_limit || @active_limit
+  end
+
+  def limits_satisfied?
+    (@ground_limit.nil? || @ground_results.size >= @ground_limit) &&
+    (@active_limit.nil? || @active_results.size >= @active_limit)
   end
 
   # --- Derived spec values ---
