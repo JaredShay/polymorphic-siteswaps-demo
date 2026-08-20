@@ -67,45 +67,39 @@
   }
   .pattern-beats {
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-  }
-  .beat-rest {
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 10px;
-    color: #555;
-    padding: 0 4px;
-  }
-  .beat-left,
-  .beat-right,
-  .beat-sync {
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 13px;
-    padding: 3px 9px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-  }
-  .beat-left {
-    color: #5ba4ff;
-    background: rgba(74, 140, 255, 0.1);
-    border: 1px solid rgba(74, 140, 255, 0.25);
-  }
-  .beat-right {
-    color: #ff9e4a;
-    background: rgba(255, 140, 60, 0.1);
-    border: 1px solid rgba(255, 140, 60, 0.25);
-  }
-  .beat-sync {
-    background: rgba(90, 50, 140, 0.15);
-    border: 1px solid rgba(90, 50, 140, 0.35);
     gap: 2px;
   }
-  .beat-sync .t-l { color: #5ba4ff; }
-  .beat-sync .sep { color: #555; }
-  .beat-sync .t-r { color: #ff9e4a; }
+  .beat-cycle {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .b-paren, .b-sep { color: #505050; }
+  .b-zero           { color: #484848; }
+  .b-rest           { color: #303030; }
+  .b-l              { color: #5ba4ff; }
+  .b-r              { color: #ff9e4a; }
+  .bb-l {
+    text-decoration-line: underline;
+    text-decoration-color: rgba(91, 164, 255, 0.65);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .bb-r {
+    text-decoration-line: underline;
+    text-decoration-color: rgba(255, 158, 74, 0.65);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  /* Sync: outer span adds the orange underline 3px lower; inner .bb-l adds the blue */
+  .bb-sync {
+    text-decoration-line: underline;
+    text-decoration-color: rgba(255, 158, 74, 0.65);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 7px;
+  }
   #filters {
     display: flex;
     flex-direction: column;
@@ -227,6 +221,7 @@
   <button id="simplified-toggle" class="toggle">Simplified</button>
   <button id="share-btn">Copy link</button>
 </div>
+
 
 <div id="filters">
   <div class="filter-row">
@@ -373,14 +368,31 @@ function escHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function renderBeats(beats) {
-  const html = beats.map(b => {
-    if (b.kind === 'rest')  return '<span class="beat beat-rest">·</span>';
-    if (b.kind === 'left')  return `<span class="beat beat-left">${escHtml(b.left)}</span>`;
-    if (b.kind === 'right') return `<span class="beat beat-right">${escHtml(b.right)}</span>`;
-    return `<span class="beat beat-sync"><span class="t-l">${escHtml(b.left)}</span><span class="sep">,</span><span class="t-r">${escHtml(b.right)}</span></span>`;
-  }).join('');
-  patternEl.innerHTML = `<div class="pattern-beats">${html}</div>`;
+function beatHtml(b) {
+  if (b.kind === 'rest') {
+    return '<span class="b-rest">(0,0)</span>';
+  }
+  if (b.kind === 'sync') {
+    return `<span class="bb-sync"><span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span></span>`;
+  }
+  if (b.kind === 'left') {
+    return `<span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-zero">0</span><span class="b-paren">)</span></span>`;
+  }
+  return `<span class="bb-r"><span class="b-paren">(</span><span class="b-zero">0</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span>`;
+}
+
+function beatsHtml(beats, family) {
+  const is2cycle = family && family.endsWith('_2cycle');
+  const cycleLen = is2cycle ? Math.round(beats.length / 2) : beats.length;
+  const cycles = [];
+  for (let i = 0; i < beats.length; i += cycleLen) cycles.push(beats.slice(i, i + cycleLen));
+  return `<div class="pattern-beats">${
+    cycles.map(c => `<div class="beat-cycle">${c.map(beatHtml).join('')}</div>`).join('')
+  }</div>`;
+}
+
+function renderBeats(beats, family) {
+  patternEl.innerHTML = beatsHtml(beats, family);
 }
 
 const gif               = document.getElementById('gif');
@@ -438,7 +450,7 @@ simplifiedToggle.addEventListener('click', () => {
   if (showingSimplified) {
     patternEl.textContent = current.simplified;
   } else if (current.beats) {
-    renderBeats(current.beats);
+    renderBeats(current.beats, current.family);
   } else {
     patternEl.textContent = current.halved;
   }
@@ -544,7 +556,7 @@ function displayPattern(halved, simplified, balls, family, state, beats = null) 
   showingSimplified = false;
   simplifiedToggle.classList.remove('on');
   if (beats) {
-    renderBeats(beats);
+    renderBeats(beats, family);
   } else {
     patternEl.textContent = halved;
   }
