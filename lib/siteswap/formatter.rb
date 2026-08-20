@@ -31,30 +31,71 @@ class SiteswapFormatter
   end
 end
 
-# Formats a raw beat array into a hash of named string representations,
-# applying a separate transform pipeline per preset.
+# Serializes halved notation elements into an array of beat token hashes
+# for structured UI rendering.
 #
-# Each preset entry maps a name to an array of transforms (e.g. from
-# SiteswapSimplifier::PRESETS). The result is a plain Hash keyed by those names.
+# Input: array of SuppressedSyncBeat (i.e. elements from PRESETS[:halved]).
 #
-#   formatter = SiteswapMultiFormatter.new(
-#     presets: { halved: [HALVE], simplified: [HALVE, CANCEL_PAIRS, EXPAND] }
-#   )
-#   formatter.format(beat_arr)
-#   # => { halved: "(4x,6)!...", simplified: "(4x,6)R4x550" }
+# Output: array of hashes, one per beat:
+#   { kind: "rest" }
+#   { kind: "left",  left:  "5x" }
+#   { kind: "right", right: "4"  }
+#   { kind: "sync",  left:  "4x", right: "6" }
+#
+# This lets the site visually distinguish rest beats from active throws,
+# and left-hand throws from right-hand throws, without any JS parsing logic.
+class SiteswapBeatsFormatter
+  def format(elements)
+    elements.map { |b| classify(b) }
+  end
+
+  private
+
+  def classify(b)
+    if b.empty?
+      { kind: "rest" }
+    elsif b.left.value.zero?
+      { kind: "right", right: fmt(b.right) }
+    elsif b.right.value.zero?
+      { kind: "left", left: fmt(b.left) }
+    else
+      { kind: "sync", left: fmt(b.left), right: fmt(b.right) }
+    end
+  end
+
+  def fmt(t)
+    s = t.value <= 35 ? t.value.to_s(36) : "{#{t.value}}"
+    t.cross ? "#{s}x" : s
+  end
+end
+
+# Formats a raw beat array into a hash of named representations,
+# each with its own transform pipeline and output formatter.
+#
+# Presets map a name to a config hash:
+#   { transforms: [transform, ...], formatter: <formatter> }
+#
+# Example:
+#   SiteswapMultiFormatter.new(presets: {
+#     halved:     { transforms: [HALVE],                    formatter: SiteswapFormatter.new },
+#     simplified: { transforms: [HALVE, CANCEL_PAIRS, EXPAND], formatter: SiteswapFormatter.new },
+#     beats:      { transforms: [HALVE],                    formatter: SiteswapBeatsFormatter.new },
+#   })
+#
+# Calling format(beat_arr) returns:
+#   { halved: "(4x,6)!...", simplified: "(4x,6)R4x550", beats: [{kind: "sync", ...}, ...] }
 class SiteswapMultiFormatter
   SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
 
-  def initialize(presets:, formatter: SiteswapFormatter.new)
-    @presets   = presets
-    @formatter = formatter
+  def initialize(presets:)
+    @presets = presets
   end
 
   def format(beat_arr)
     raw = beat_arr.map { |l, r| SuppressedSyncBeat.new(left: l, right: r) }
-    @presets.transform_values do |transforms|
-      elements = transforms.reduce(raw) { |els, t| t.call(els) }
-      @formatter.format(elements)
+    @presets.transform_values do |config|
+      elements = config[:transforms].reduce(raw) { |els, t| t.call(els) }
+      config[:formatter].format(elements)
     end
   end
 end

@@ -23,11 +23,19 @@ RSpec.describe 'generate → format integration' do
 
     all_patterns.each do |pattern|
       expect(pattern).to be_a(Hash)
-      expect(pattern).to include(:halved, :simplified)
+      expect(pattern).to include(:halved, :simplified, :beats)
+
       expect(pattern[:halved]).to match(SITESWAP_NOTATION_RE),
         "invalid halved notation: #{pattern[:halved].inspect}"
       expect(pattern[:simplified]).to match(SITESWAP_NOTATION_RE),
         "invalid simplified notation: #{pattern[:simplified].inspect}"
+
+      expect(pattern[:beats]).to be_an(Array).and(satisfy { |a| !a.empty? })
+      pattern[:beats].each do |beat|
+        expect(%w[sync left right rest]).to include(beat[:kind])
+        expect(beat[:left]).to  match(/\A[0-9a-z{}x]+\z/) if beat.key?(:left)
+        expect(beat[:right]).to match(/\A[0-9a-z{}x]+\z/) if beat.key?(:right)
+      end
     end
   end
 end

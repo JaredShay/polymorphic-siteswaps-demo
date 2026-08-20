@@ -8,8 +8,9 @@ class PolymorphicSiteswaps
 
   DEFAULT_FORMATTER = SiteswapMultiFormatter.new(
     presets: {
-      halved:     SiteswapSimplifier::PRESETS[:halved],
-      simplified: SiteswapSimplifier::PRESETS[:full],
+      halved:     { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: SiteswapFormatter.new },
+      simplified: { transforms: SiteswapSimplifier::PRESETS[:full],   formatter: SiteswapFormatter.new },
+      beats:      { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: SiteswapBeatsFormatter.new },
     }
   ).freeze
 
