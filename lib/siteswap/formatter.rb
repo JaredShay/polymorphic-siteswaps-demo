@@ -45,6 +45,8 @@ end
 # This lets the site visually distinguish rest beats from active throws,
 # and left-hand throws from right-hand throws, without any JS parsing logic.
 class SiteswapBeatsFormatter
+  SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
+
   def format(elements)
     elements.map { |b| classify(b) }
   end
@@ -52,14 +54,15 @@ class SiteswapBeatsFormatter
   private
 
   def classify(b)
+    suppressed = b.is_a?(SuppressedSyncBeat)
     if b.empty?
-      { kind: "rest" }
+      { kind: "rest", suppressed: suppressed }
     elsif b.left.value.zero?
-      { kind: "right", right: fmt(b.right) }
+      { kind: "right", right: fmt(b.right), suppressed: suppressed }
     elsif b.right.value.zero?
-      { kind: "left", left: fmt(b.left) }
+      { kind: "left", left: fmt(b.left), suppressed: suppressed }
     else
-      { kind: "sync", left: fmt(b.left), right: fmt(b.right) }
+      { kind: "sync", left: fmt(b.left), right: fmt(b.right), suppressed: suppressed }
     end
   end
 

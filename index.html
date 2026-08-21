@@ -369,16 +369,17 @@ function escHtml(s) {
 }
 
 function beatHtml(b) {
+  const bang = b.suppressed ? '<span class="b-rest">!</span>' : '';
   if (b.kind === 'rest') {
-    return '<span class="b-rest">(0,0)</span>';
+    return `<span class="b-rest">(0,0)!</span>`;
   }
   if (b.kind === 'sync') {
-    return `<span class="bb-sync"><span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span></span>`;
+    return `<span class="bb-sync"><span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span></span>${bang}`;
   }
   if (b.kind === 'left') {
-    return `<span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-zero">0</span><span class="b-paren">)</span></span>`;
+    return `<span class="bb-l"><span class="b-paren">(</span><span class="b-l">${escHtml(b.left)}</span><span class="b-sep">,</span><span class="b-zero">0</span><span class="b-paren">)</span></span>${bang}`;
   }
-  return `<span class="bb-r"><span class="b-paren">(</span><span class="b-zero">0</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span>`;
+  return `<span class="bb-r"><span class="b-paren">(</span><span class="b-zero">0</span><span class="b-sep">,</span><span class="b-r">${escHtml(b.right)}</span><span class="b-paren">)</span></span>${bang}`;
 }
 
 function beatsHtml(beats, family) {
