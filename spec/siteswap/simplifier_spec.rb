@@ -1,6 +1,6 @@
 RSpec.describe SiteswapSimplifier do
   let(:simplifier) { described_class.new }
-  let(:formatter)  { SiteswapFormatter.new }
+  let(:formatter)  { Siteswap::Formatters::Pattern.new }
 
   BEAT_RE = /\(([0-9a-z]x?|\{\d+\}x?),([0-9a-z]x?|\{\d+\}x?)\)(!?)/
 

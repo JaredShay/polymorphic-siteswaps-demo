@@ -41,7 +41,7 @@ class SiteswapSimplifier
   end
 
   def simplify(beat_arr, verbose: @verbose)
-    formatter = SiteswapFormatter.new
+    formatter = Siteswap::Formatters::Pattern.new
     log_raw(beat_arr, formatter) if verbose
     elements = @transforms.reduce(to_beats(beat_arr)) do |els, transform|
       result = transform.call(els)

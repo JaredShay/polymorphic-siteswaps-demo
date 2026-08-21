@@ -1,4 +1,4 @@
-RSpec.describe SiteswapFormatter do
+RSpec.describe Siteswap::Formatters::Pattern do
   subject(:formatter) { described_class.new.format(input) }
 
   let(:notation) { Siteswap::Notation }
@@ -43,7 +43,7 @@ RSpec.describe SiteswapFormatter do
   end
 end
 
-RSpec.describe SiteswapBeatsFormatter do
+RSpec.describe Siteswap::Formatters::Beats do
   let(:notation) { Siteswap::Notation }
   subject(:result) { described_class.new.format(beats) }
 
@@ -58,7 +58,7 @@ RSpec.describe SiteswapBeatsFormatter do
     let(:beats) { [ssb(0, false, 0, false)] }
 
     it 'returns kind: rest' do
-      expect(result).to eq([{ kind: "rest" }])
+      expect(result).to eq([{ kind: "rest", suppressed: true }])
     end
   end
 
@@ -66,7 +66,7 @@ RSpec.describe SiteswapBeatsFormatter do
     let(:beats) { [ssb(5, false, 0, false)] }
 
     it 'returns kind: left with the left throw value' do
-      expect(result).to eq([{ kind: "left", left: "5" }])
+      expect(result).to eq([{ kind: "left", left: "5", suppressed: true }])
     end
   end
 
@@ -74,7 +74,7 @@ RSpec.describe SiteswapBeatsFormatter do
     let(:beats) { [ssb(0, false, 4, true)] }
 
     it 'returns kind: right with the right throw value including x' do
-      expect(result).to eq([{ kind: "right", right: "4x" }])
+      expect(result).to eq([{ kind: "right", right: "4x", suppressed: true }])
     end
   end
 
@@ -82,7 +82,7 @@ RSpec.describe SiteswapBeatsFormatter do
     let(:beats) { [ssb(4, true, 6, false)] }
 
     it 'returns kind: sync with both throw values' do
-      expect(result).to eq([{ kind: "sync", left: "4x", right: "6" }])
+      expect(result).to eq([{ kind: "sync", left: "4x", right: "6", suppressed: true }])
     end
   end
 
@@ -101,12 +101,12 @@ RSpec.describe SiteswapBeatsFormatter do
 
     it 'classifies each beat correctly' do
       expect(result).to eq([
-        { kind: "sync",  left: "4x", right: "6" },
-        { kind: "rest" },
-        { kind: "right", right: "4x" },
-        { kind: "left",  left: "5" },
-        { kind: "right", right: "5" },
-        { kind: "rest" },
+        { kind: "sync",  left: "4x", right: "6",  suppressed: true },
+        { kind: "rest",                            suppressed: true },
+        { kind: "right", right: "4x",             suppressed: true },
+        { kind: "left",  left: "5",               suppressed: true },
+        { kind: "right", right: "5",              suppressed: true },
+        { kind: "rest",                            suppressed: true },
       ])
     end
   end

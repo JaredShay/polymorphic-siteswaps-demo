@@ -6,11 +6,11 @@ require_relative 'formatter'
 class PolymorphicSiteswaps
   Throw = Siteswap::Notation::Throw
 
-  DEFAULT_FORMATTER = SiteswapMultiFormatter.new(
+  DEFAULT_FORMATTER = Siteswap::Formatters::Multi.new(
     presets: {
-      halved:     { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: SiteswapFormatter.new },
-      simplified: { transforms: SiteswapSimplifier::PRESETS[:full],   formatter: SiteswapFormatter.new },
-      beats:      { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: SiteswapBeatsFormatter.new },
+      halved:     { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: Siteswap::Formatters::Pattern.new },
+      simplified: { transforms: SiteswapSimplifier::PRESETS[:full],   formatter: Siteswap::Formatters::Pattern.new },
+      beats:      { transforms: SiteswapSimplifier::PRESETS[:halved], formatter: Siteswap::Formatters::Beats.new },
     }
   ).freeze
 
