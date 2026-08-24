@@ -2,13 +2,7 @@ require_relative 'notation'
 
 module Siteswap
   module Transforms
-    SuppressedSyncBeat = Notation::SuppressedSyncBeat
-    SyncBeat           = Notation::SyncBeat
-    AsyncThrow         = Notation::AsyncThrow
-    EmptySlot          = Notation::EmptySlot
-    HandAnnotation     = Notation::HandAnnotation
-    Throw              = Notation::Throw
-    MultiplexThrow     = Notation::MultiplexThrow
+    Notation.import_into(self)
 
     # Rule 1 – divide every throw value by 2, mark all beats suppressed (!).
     # Halving can flip parity, which must be compensated by toggling x:

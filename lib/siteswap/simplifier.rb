@@ -18,7 +18,7 @@ require_relative 'formatter'
 #   SiteswapSimplifier::PRESETS[:compact] – halve + cancel empty pairs
 #   SiteswapSimplifier::PRESETS[:full]    – halve + cancel + expand to mixed notation (default)
 class SiteswapSimplifier
-  SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
+  Siteswap::Notation.import_into(self)
 
   class SimplifiedPattern < Dry::Struct
     attribute :elements, Siteswap::Types::Strict::Array

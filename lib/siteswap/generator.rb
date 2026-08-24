@@ -4,8 +4,7 @@ require_relative 'simplifier'
 require_relative 'formatter'
 
 class PolymorphicSiteswaps
-  Throw          = Siteswap::Notation::Throw
-  MultiplexThrow = Siteswap::Notation::MultiplexThrow
+  Siteswap::Notation.import_into(self)
 
   DEFAULT_FORMATTER = Siteswap::Formatters::Multi.new(
     presets: {
@@ -462,6 +461,9 @@ class PolymorphicSiteswaps
   end
 
   def squeeze_from_external?(provenance, lb, lh)
+    # If the landing slot has initial occupancy > 1, it is a planned multiplex
+    # source slot — multiple arrivals are expected and are NOT squeezes.
+    return false if @initial_holes[lb][lh] > 1
     provenance[lb][lh].any?
   end
 

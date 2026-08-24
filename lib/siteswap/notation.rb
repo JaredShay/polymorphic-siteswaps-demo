@@ -55,5 +55,11 @@ module Siteswap
       Types.Instance(AsyncThrow) |
       Types.Instance(EmptySlot) |
       Types.Instance(HandAnnotation)
+
+    # Useful for referencing the constants here without needing the full name
+    # space of this module.
+    def self.import_into(target)
+      constants.each { |name| target.const_set(name, const_get(name)) }
+    end
   end
 end

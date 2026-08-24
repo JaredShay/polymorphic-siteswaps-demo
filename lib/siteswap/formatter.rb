@@ -2,12 +2,7 @@ require_relative 'notation'
 
 module Siteswap
   module Formatters
-    SuppressedSyncBeat = Siteswap::Notation::SuppressedSyncBeat
-    SyncBeat           = Siteswap::Notation::SyncBeat
-    AsyncThrow         = Siteswap::Notation::AsyncThrow
-    EmptySlot          = Siteswap::Notation::EmptySlot
-    HandAnnotation     = Siteswap::Notation::HandAnnotation
-    MultiplexThrow     = Siteswap::Notation::MultiplexThrow
+    Siteswap::Notation.import_into(self)
 
     # Serializes a notation sequence into a siteswap string.
     class Pattern
