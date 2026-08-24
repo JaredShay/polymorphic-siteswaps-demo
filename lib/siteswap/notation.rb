@@ -10,6 +10,17 @@ module Siteswap
       def empty? = value.zero?
     end
 
+    class MultiplexThrow < Dry::Struct
+      attribute :throws, Types::Strict::Array.of(Types.Instance(Throw))
+                           .constrained(min_size: 2)
+
+      def empty? = false
+      def value  = throws.sum(&:value)
+      def values = throws.map(&:value)
+    end
+
+    ThrowOrMultiplex = Types.Instance(Throw) | Types.Instance(MultiplexThrow)
+
     module SyncBeatMethods
       def empty?       = left.value.zero? && right.value.zero?
       def single_hand? = left.value.zero? ^ right.value.zero?
@@ -18,14 +29,14 @@ module Siteswap
 
     class SyncBeat < Dry::Struct
       include SyncBeatMethods
-      attribute :left,  Types.Instance(Throw)
-      attribute :right, Types.Instance(Throw)
+      attribute :left,  ThrowOrMultiplex
+      attribute :right, ThrowOrMultiplex
     end
 
     class SuppressedSyncBeat < Dry::Struct
       include SyncBeatMethods
-      attribute :left,  Types.Instance(Throw)
-      attribute :right, Types.Instance(Throw)
+      attribute :left,  ThrowOrMultiplex
+      attribute :right, ThrowOrMultiplex
 
       def cancel = SyncBeat.new(left: left, right: right)
     end

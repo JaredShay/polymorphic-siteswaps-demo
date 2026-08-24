@@ -4,7 +4,8 @@ require_relative 'simplifier'
 require_relative 'formatter'
 
 class PolymorphicSiteswaps
-  Throw = Siteswap::Notation::Throw
+  Throw          = Siteswap::Notation::Throw
+  MultiplexThrow = Siteswap::Notation::MultiplexThrow
 
   DEFAULT_FORMATTER = Siteswap::Formatters::Multi.new(
     presets: {
@@ -20,6 +21,8 @@ class PolymorphicSiteswaps
     right_beats:,
     number_of_balls:,
     throws:,
+    multiplex_throws: nil,
+    allow_squeeze_catches: false,
     single_cycle_period: nil,
     num_cycles: nil,
     ground_limit: nil,
@@ -36,6 +39,8 @@ class PolymorphicSiteswaps
       right_beats: right_beats,
       number_of_balls: number_of_balls,
       throws: throws,
+      multiplex_throws: multiplex_throws,
+      allow_squeeze_catches: allow_squeeze_catches,
       single_cycle_period: single_cycle_period,
       num_cycles: num_cycles,
       ground_limit: ground_limit,
@@ -50,6 +55,8 @@ class PolymorphicSiteswaps
     :right_beats,
     :number_of_balls,
     :throws,
+    :multiplex_throws,
+    :allow_squeeze_catches,
     :single_cycle_period,
     :num_cycles,
     :ground_limit,
@@ -63,6 +70,8 @@ class PolymorphicSiteswaps
     right_beats:,
     number_of_balls:,
     throws:,
+    multiplex_throws: nil,
+    allow_squeeze_catches: false,
     single_cycle_period: nil,
     num_cycles: nil,
     ground_limit: nil,
@@ -72,17 +81,19 @@ class PolymorphicSiteswaps
   )
     raise ArgumentError, "throw values must be even" unless Siteswap::Types::ThrowList.valid?(throws)
 
-    @period              = period
-    @left_beats          = left_beats
-    @right_beats         = right_beats
-    @number_of_balls     = number_of_balls
-    @throws              = throws
-    @single_cycle_period = single_cycle_period
-    @num_cycles          = num_cycles
-    @ground_limit        = ground_limit
-    @active_limit        = active_limit
-    @debug               = debug
-    @formatter           = formatter
+    @period                = period
+    @left_beats            = left_beats
+    @right_beats           = right_beats
+    @number_of_balls       = number_of_balls
+    @throws                = throws
+    @multiplex_throws      = multiplex_throws
+    @allow_squeeze_catches = allow_squeeze_catches
+    @single_cycle_period   = single_cycle_period
+    @num_cycles            = num_cycles
+    @ground_limit          = ground_limit
+    @active_limit          = active_limit
+    @debug                 = debug
+    @formatter             = formatter
   end
 
   def generate
@@ -119,25 +130,28 @@ class PolymorphicSiteswaps
     result
   end
 
-  # The patterns generated here are not interesting if they don't have crossing
-  # throws
   def has_cross?(beats)
-    beats.any? { |l, r| l.cross || r.cross }
+    beats.any? do |l, r|
+      throw_has_cross?(l) || throw_has_cross?(r)
+    end
+  end
+
+  def throw_has_cross?(t)
+    case t
+    when MultiplexThrow then t.throws.any?(&:cross)
+    when Throw          then t.cross
+    end
   end
 
   # --- Search ---
   #
-  # JugglingLab-style holes-based DFS.
+  # Outer loop enumerates occupancy configurations (all-1 baseline, then subsets
+  # of slots treated as multiplex with occupancy=2). For each configuration, runs
+  # the JugglingLab-style holes-based DFS.
   #
-  # holes[beat][hand] = 1 for each designated throw slot (left hand at left_beats,
-  # right hand at right_beats). Each throw fills one landing slot by decrementing it.
-  # The throw value is determined by the beat distance: v = 2 * ((lb - beat + P) % P).
+  # holes[beat][hand] = occupancy for each throw slot; 0 elsewhere.
+  # Each throw fills one landing slot by decrementing its hole count.
   # A pattern is valid when all holes reach 0 and the sum equals target.
-  #
-  # All crosses must land directly on an active beat of the catching hand.
-  # Any cross value is permitted provided it satisfies this constraint — small
-  # crosses (e.g. 2x landing directly on an active beat) are allowed, as jugglers
-  # can accommodate fast throws with dwell time adjustments.
   def search
     t0              = Time.now
     @ground_results = []
@@ -145,27 +159,40 @@ class PolymorphicSiteswaps
     @seen           = {}
     @nodes          = 0
     @ground_state   = compute_ground_state
-    slots  = strict_throw_slots
-    holes  = init_holes(slots)
-    chosen = Array.new(slots.size)
+    @slots          = strict_throw_slots
 
-    # For multi-cycle patterns, build a checkpoint at each intermediate cycle
-    # boundary (all except the last). At each checkpoint, we verify that at
-    # least one throw from the preceding cycles has landed in the remaining
-    # cycles — otherwise the pattern resolves early and is not genuinely N-cycle.
-    # Keyed by slot index for O(1) lookup in fill_slot.
     @cycle_checkpoints = {}
     if single_cycle_period && num_cycles && num_cycles > 1
       (1...num_cycles).each do |i|
         boundary = single_cycle_period * i
-        slot_idx = slots.index { |beat, _| beat >= boundary }
-        @cycle_checkpoints[slot_idx] = slots.select { |beat, _| beat >= boundary }
+        slot_idx = @slots.index { |beat, _| beat >= boundary }
+        @cycle_checkpoints[slot_idx] = @slots.select { |beat, _| beat >= boundary }
       end
     end
 
-    fill_slot(slots, 0, holes, chosen, 0)
+    run_with_occupancy(Array.new(@slots.size, 1))
+
+    unless multiplex_throws.nil? || multiplex_throws.empty?
+      (1..@slots.size).each do |k|
+        @slots.each_index.to_a.combination(k).each do |multiplex_indices|
+          occupancy = Array.new(@slots.size, 1)
+          multiplex_indices.each { |i| occupancy[i] = 2 }
+          next unless feasible_sum?(occupancy)
+          run_with_occupancy(occupancy)
+        end
+      end
+    end
+
     log_timing(t0, @nodes, @ground_results.size + @active_results.size) if debug
     [@ground_results, @active_results]
+  end
+
+  def run_with_occupancy(occupancy)
+    holes          = init_holes(@slots, occupancy)
+    @initial_holes = holes.map(&:dup)
+    chosen         = Array.new(@slots.size)
+    prov           = init_provenance
+    fill_slot(@slots, 0, holes, chosen, 0, occupancy, prov)
   end
 
   # Left hand at left_beats, right hand at right_beats.
@@ -178,14 +205,37 @@ class PolymorphicSiteswaps
     slots
   end
 
-  # holes[beat][hand] = 1 for each throw slot; 0 elsewhere.
-  def init_holes(slots)
+  def init_holes(slots, occupancy)
     h = Array.new(period) { [0, 0] }
-    slots.each { |beat, hand| h[beat][hand] = 1 }
+    slots.each_with_index do |(beat, hand), k|
+      h[beat][hand] = occupancy[k]
+    end
     h
   end
 
-  def fill_slot(slots, k, holes, chosen, sum)
+  # Quick feasibility check: can we reach the target sum given the occupancy
+  # configuration? Computes min/max achievable sums across all slots.
+  def feasible_sum?(occupancy)
+    min_sum = 0
+    max_sum = 0
+    @slots.each_index do |k|
+      if occupancy[k] == 1
+        non_zero = throws.reject(&:zero?)
+        return false if non_zero.empty?
+        min_sum += non_zero.min
+        max_sum += throws.max
+      else
+        valid_combos = parsed_multiplex_throws.select { |c| c.size == occupancy[k] }
+        return false if valid_combos.empty?
+        combo_sums   = valid_combos.map { |c| c.sum(&:first) }
+        min_sum += combo_sums.min
+        max_sum += combo_sums.max
+      end
+    end
+    min_sum <= target && max_sum >= target
+  end
+
+  def fill_slot(slots, k, holes, chosen, sum, occupancy, provenance)
     return if limited? && limits_satisfied?
 
     @nodes += 1
@@ -193,24 +243,26 @@ class PolymorphicSiteswaps
     # Multi-cycle pruning: at each intermediate cycle boundary, verify that at
     # least one throw from the preceding beats has landed in the remaining beats.
     # If not, the pattern has resolved to ground state early — prune.
-    if (remaining = @cycle_checkpoints[k])
-      return unless remaining.any? { |b, h| holes[b][h].zero? }
+    if (remaining_slots = @cycle_checkpoints[k])
+      return unless remaining_slots.any? { |b, h| holes[b][h] < @initial_holes[b][h] }
     end
 
     if k == slots.size
-      add_result(build_beat_arr(slots, chosen)) if sum == target
+      add_result(build_beat_arr(slots, chosen, occupancy)) if sum == target
       return
     end
 
-    beat, hand = slots[k]
-    remaining  = slots.size - k - 1
+    beat, hand   = slots[k]
+    remaining_ct = slots.size - k - 1
 
-    # --- Direct landing at an active slot ---
-    #
-    # Iterate over throw values rather than landing beats so that values exceeding
-    # 2*period are reachable. Two different values may land at the same slot
-    # (e.g. v=2 and v=14 in a period-6 pattern both land at beat+1); they are
-    # distinct throws — same timing, different height — and both are generated.
+    if occupancy[k] == 1
+      fill_single(slots, k, holes, chosen, sum, occupancy, provenance, beat, hand, remaining_ct)
+    else
+      fill_multiplex(slots, k, holes, chosen, sum, occupancy, provenance, beat, hand, remaining_ct)
+    end
+  end
+
+  def fill_single(slots, k, holes, chosen, sum, occupancy, provenance, beat, hand, remaining_ct)
     throw_order = limited? ? throws.shuffle : throws
     throw_order.each do |v|
       next if v.zero?
@@ -221,20 +273,73 @@ class PolymorphicSiteswaps
 
         new_sum = sum + v
         next if new_sum > target
-        next if new_sum + remaining * throws.max < target
+        next if new_sum + remaining_ct * max_possible_throw < target
+
+        next if !allow_squeeze_catches && squeeze_from_external?(provenance, lb, lh)
 
         holes[lb][lh] -= 1
+        record_provenance(provenance, lb, lh, beat, hand)
         chosen[k] = Throw.new(value: v, cross: cross)
-        fill_slot(slots, k + 1, holes, chosen, new_sum)
+        fill_slot(slots, k + 1, holes, chosen, new_sum, occupancy, provenance)
+        unrecord_provenance(provenance, lb, lh)
         holes[lb][lh] += 1
       end
     end
   end
 
-  def build_beat_arr(slots, chosen)
+  def fill_multiplex(slots, k, holes, chosen, sum, occupancy, provenance, beat, hand, remaining_ct)
+    valid_combos = parsed_multiplex_throws.select { |c| c.size == occupancy[k] }
+
+    valid_combos.each do |combo|
+      values  = combo.map(&:first)
+      new_sum = sum + values.sum
+      next if new_sum > target
+      next if new_sum + remaining_ct * max_possible_throw < target
+
+      cross_options    = Array.new(combo.size) { [false, true] }
+      cross_combos     = cross_options.first.product(*cross_options[1..])
+
+      cross_combos.each do |crosses|
+        throws_spec = combo.zip(crosses).map do |(v, _), cross|
+          lh = cross ? hand ^ 1 : hand
+          lb = (beat + v / 2) % period
+          { v: v, cross: cross, lb: lb, lh: lh }
+        end
+
+        landing_slots = throws_spec.map { |t| [t[:lb], t[:lh]] }
+
+        # Within-combo squeeze: two components landing at same (beat, hand)
+        next if !allow_squeeze_catches && landing_slots.size != landing_slots.uniq.size
+
+        capacity = Hash.new(0)
+        throws_spec.each { |t| capacity[[t[:lb], t[:lh]]] += 1 }
+
+        valid = capacity.all? do |(lb, lh), count|
+          holes[lb][lh] >= count &&
+            (allow_squeeze_catches || !squeeze_from_external?(provenance, lb, lh))
+        end
+        next unless valid
+
+        throws_spec.each        { |t| holes[t[:lb]][t[:lh]] -= 1 }
+        throws_spec.each        { |t| record_provenance(provenance, t[:lb], t[:lh], beat, hand) }
+        chosen[k] = throws_spec.map { |t| Throw.new(value: t[:v], cross: t[:cross]) }
+
+        fill_slot(slots, k + 1, holes, chosen, new_sum, occupancy, provenance)
+
+        throws_spec.reverse_each { |t| unrecord_provenance(provenance, t[:lb], t[:lh]) }
+        throws_spec.each         { |t| holes[t[:lb]][t[:lh]] += 1 }
+      end
+    end
+  end
+
+  def build_beat_arr(slots, chosen, occupancy)
     beat_arr = Array.new(period) { [Throw.new(value: 0, cross: false), Throw.new(value: 0, cross: false)] }
     slots.each_with_index do |(beat, hand), k|
-      beat_arr[beat][hand] = chosen[k]
+      if occupancy[k] > 1
+        beat_arr[beat][hand] = MultiplexThrow.new(throws: chosen[k].sort_by(&:value))
+      else
+        beat_arr[beat][hand] = chosen[k]
+      end
     end
     beat_arr
   end
@@ -270,8 +375,31 @@ class PolymorphicSiteswaps
     @target ||= number_of_balls * period * 2
   end
 
-  def throw_set
-    @throw_set ||= throws.to_set
+  def max_possible_throw
+    @max_possible_throw ||= begin
+      single_max    = throws.max
+      multiplex_max = parsed_multiplex_throws.map { |c| c.sum(&:first) }.max
+      [single_max, multiplex_max || 0].max
+    end
+  end
+
+  def parsed_multiplex_throws
+    @parsed_multiplex_throws ||= (multiplex_throws || []).map { |s| parse_multiplex_string(s) }
+  end
+
+  # Converts a multiplex string like "4x6" into [[4, true], [6, false]].
+  # Values are read as base-36 digits; 'x' suffix marks a crossing component.
+  def parse_multiplex_string(s)
+    components = []
+    i = 0
+    while i < s.length
+      value = s[i].to_i(36)
+      i += 1
+      cross = s[i] == 'x'
+      i += 1 if cross
+      components << [value, cross]
+    end
+    components
   end
 
   # --- Pattern operations ---
@@ -280,10 +408,13 @@ class PolymorphicSiteswaps
     state = []
     beats.each_with_index do |(l, r), i|
       [[0, l], [1, r]].each do |throw_hand, t|
-        next if t.empty?
-        land_hand = throw_hand ^ (t.cross ? 1 : 0)
-        rel       = i + t.value / 2 - period
-        state << [rel, land_hand] if rel >= 0
+        next if t.respond_to?(:empty?) && t.empty?
+        component_throws = t.is_a?(MultiplexThrow) ? t.throws : [t]
+        component_throws.each do |single|
+          land_hand = throw_hand ^ (single.cross ? 1 : 0)
+          rel       = i + single.value / 2 - period
+          state << [rel, land_hand] if rel >= 0
+        end
       end
     end
     state.sort
@@ -309,8 +440,37 @@ class PolymorphicSiteswaps
   end
 
   def sync_fmt(t)
-    s = t.value.to_s(36)
-    t.cross ? "#{s}x" : s
+    case t
+    when MultiplexThrow
+      inner = t.throws.sort_by(&:value)
+                      .map { |th| "#{th.value.to_s(36)}#{th.cross ? 'x' : ''}" }
+                      .join
+      "[#{inner}]"
+    when Throw
+      s = t.value.to_s(36)
+      t.cross ? "#{s}x" : s
+    end
+  end
+
+  # --- Provenance tracking for squeeze detection ---
+  #
+  # Records which source slots have already assigned a ball to each landing
+  # (beat, hand). Used to detect cross-slot squeeze catches during DFS.
+
+  def init_provenance
+    Array.new(period) { [[], []] }
+  end
+
+  def squeeze_from_external?(provenance, lb, lh)
+    provenance[lb][lh].any?
+  end
+
+  def record_provenance(prov, lb, lh, src_beat, src_hand)
+    prov[lb][lh] << { source_beat: src_beat, source_hand: src_hand }
+  end
+
+  def unrecord_provenance(prov, lb, lh)
+    prov[lb][lh].pop
   end
 
   # --- Timing ---

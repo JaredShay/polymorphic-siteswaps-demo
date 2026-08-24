@@ -8,11 +8,13 @@ module Siteswap
     EmptySlot          = Notation::EmptySlot
     HandAnnotation     = Notation::HandAnnotation
     Throw              = Notation::Throw
+    MultiplexThrow     = Notation::MultiplexThrow
 
     # Rule 1 – divide every throw value by 2, mark all beats suppressed (!).
     # Halving can flip parity, which must be compensated by toggling x:
     #   v mod 4 == 0 → v/2 is even, parity unchanged → keep x as-is
     #   v mod 4 == 2 → v/2 is odd,  parity flipped  → toggle x
+    # For MultiplexThrow, apply independently to each component throw.
     class Halve
       def label            = "halve"
       def dilation_factor  = 0.5
@@ -26,6 +28,15 @@ module Siteswap
       private
 
       def halve_throw(t)
+        case t
+        when MultiplexThrow
+          MultiplexThrow.new(throws: t.throws.map { |th| halve_single(th) }.sort_by(&:value))
+        when Throw
+          halve_single(t)
+        end
+      end
+
+      def halve_single(t)
         v     = t.value / 2
         cross = (t.value % 4 == 2) ? !t.cross : t.cross
         Throw.new(value: v, cross: cross)
@@ -64,6 +75,8 @@ module Siteswap
     #   (N,0)!  → L N      (suppressed left)
     #   (0,N)   → R N 0    (unsuppressed right)
     #   (N,0)   → L N 0    (unsuppressed left)
+    # Beats containing a MultiplexThrow are left in sync form — there is no
+    # standard async notation for a simultaneous multi-throw.
     class Expand
       def label           = "expand"
       def dilation_factor = 1.0
@@ -77,6 +90,7 @@ module Siteswap
       def expand_all(elements)
         elements.flat_map do |b|
           next [b] unless b.is_a?(SyncBeat) || b.is_a?(SuppressedSyncBeat)
+          next [b] if b.left.is_a?(MultiplexThrow) || b.right.is_a?(MultiplexThrow)
 
           if b.empty?
             b.is_a?(SuppressedSyncBeat) ? [EmptySlot.new] : [EmptySlot.new, EmptySlot.new]
