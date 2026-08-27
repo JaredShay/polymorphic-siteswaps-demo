@@ -6,20 +6,8 @@
   font-weight: 500;
   color: var(--text-hi);
   margin: 0 0 var(--s4);
-  position: relative;
-  padding-top: var(--s4);
 }
 
-.presets-grid__heading::before {
-  content: "";
-  display: block;
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--hairline-strong) 25%, var(--hairline-strong) 75%, transparent);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-}
 
 .presets-grid__grid {
   display: grid;

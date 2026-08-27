@@ -51,9 +51,9 @@
 }
 
 .chip[aria-pressed="true"] {
-  background: var(--surface-2);
+  background: rgba(255, 178, 92, 0.12);
   color: var(--text-hi);
-  border-color: var(--hairline-strong);
+  border-color: var(--accent);
 }
 
 .chip:focus-visible {

@@ -39,59 +39,49 @@ module Siteswap
       end
     end
 
-    # Serializes a notation beat sequence into an array of beat token hashes
+    # Serializes a notation beat sequence into an array of ApiBeat hashes
     # for structured UI rendering.
     #
-    # Each beat is classified by kind and whether it is suppressed:
-    #   { kind: "rest",      suppressed: bool }
-    #   { kind: "left",      left:  "5x",         suppressed: bool }
-    #   { kind: "right",     right: "4",           suppressed: bool }
-    #   { kind: "sync",      left:  "4x", right: "6", suppressed: bool }
-    #   { kind: "multiplex", hand:  "left", throws: ["4", "6x"], suppressed: bool }
+    # Each beat:
+    #   { index: int, suppressed: bool }
+    #   { index: int, suppressed: bool, left:  { throws: [{label:,value:,cross:},...] } }
+    #   { index: int, suppressed: bool, right: { throws: [{label:,value:,cross:},...] } }
+    #   { index: int, suppressed: bool, left: {...}, right: {...} }
+    #
+    # left/right are omitted when both throws for that hand are zero (silent).
     class Beats
       def format(elements)
-        elements.map { |b| classify(b) }
+        elements.each_with_index.map { |b, i| classify(b, i) }
       end
 
       private
 
-      def classify(b)
+      def classify(b, index)
         suppressed = b.is_a?(SuppressedSyncBeat)
-        left_mp    = b.left.is_a?(MultiplexThrow)
-        right_mp   = b.right.is_a?(MultiplexThrow)
+        result     = { index: index, suppressed: suppressed }
 
-        if b.empty?
-          { kind: "rest", suppressed: suppressed }
-        elsif left_mp && b.right.value.zero?
-          { kind: "multiplex", hand: "left",  throws: fmt_multiplex_throws(b.left),  suppressed: suppressed }
-        elsif right_mp && b.left.value.zero?
-          { kind: "multiplex", hand: "right", throws: fmt_multiplex_throws(b.right), suppressed: suppressed }
-        elsif left_mp || right_mp
-          { kind: "sync", left: fmt(b.left), right: fmt(b.right), suppressed: suppressed }
-        elsif b.left.value.zero?
-          { kind: "right", right: fmt(b.right), suppressed: suppressed }
-        elsif b.right.value.zero?
-          { kind: "left", left: fmt(b.left), suppressed: suppressed }
-        else
-          { kind: "sync", left: fmt(b.left), right: fmt(b.right), suppressed: suppressed }
-        end
+        left_throws  = hand_throws(b.left)
+        right_throws = hand_throws(b.right)
+
+        result[:left]  = { throws: left_throws  } unless left_throws.empty?
+        result[:right] = { throws: right_throws } unless right_throws.empty?
+
+        result
       end
 
-      def fmt(t)
+      def hand_throws(t)
         case t
         when MultiplexThrow
-          "[#{fmt_multiplex_throws(t).join}]"
+          t.throws.sort_by(&:value).map { |th| throw_obj(th) }
         when Throw
-          s = t.value <= 35 ? t.value.to_s(36) : "{#{t.value}}"
-          t.cross ? "#{s}x" : s
+          t.value.zero? ? [] : [throw_obj(t)]
         end
       end
 
-      def fmt_multiplex_throws(mt)
-        mt.throws.sort_by(&:value).map do |t|
-          s = t.value <= 35 ? t.value.to_s(36) : "{#{t.value}}"
-          t.cross ? "#{s}x" : s
-        end
+      def throw_obj(t)
+        s     = t.value <= 35 ? t.value.to_s(36) : "{#{t.value}}"
+        label = t.cross ? "#{s}x" : s
+        { label: label, value: t.value, cross: t.cross }
       end
     end
 

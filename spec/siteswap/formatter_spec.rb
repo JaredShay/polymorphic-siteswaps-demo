@@ -54,35 +54,62 @@ RSpec.describe Siteswap::Formatters::Beats do
     )
   end
 
+  def th(label, value, cross)
+    { label: label, value: value, cross: cross }
+  end
+
   context 'with a rest beat (both zero)' do
     let(:beats) { [ssb(0, false, 0, false)] }
 
-    it 'returns kind: rest' do
-      expect(result).to eq([{ kind: "rest", suppressed: true }])
+    it 'returns index, suppressed, no hands' do
+      expect(result).to eq([{ index: 0, suppressed: true }])
     end
   end
 
   context 'with a left-only beat' do
     let(:beats) { [ssb(5, false, 0, false)] }
 
-    it 'returns kind: left with the left throw value' do
-      expect(result).to eq([{ kind: "left", left: "5", suppressed: true }])
+    it 'returns left throws, no right' do
+      expect(result).to eq([{ index: 0, suppressed: true, left: { throws: [th("5", 5, false)] } }])
     end
   end
 
-  context 'with a right-only beat' do
+  context 'with a right-only beat with cross' do
     let(:beats) { [ssb(0, false, 4, true)] }
 
-    it 'returns kind: right with the right throw value including x' do
-      expect(result).to eq([{ kind: "right", right: "4x", suppressed: true }])
+    it 'returns right throws with x label, no left' do
+      expect(result).to eq([{ index: 0, suppressed: true, right: { throws: [th("4x", 4, true)] } }])
     end
   end
 
   context 'with a sync beat (both non-zero)' do
     let(:beats) { [ssb(4, true, 6, false)] }
 
-    it 'returns kind: sync with both throw values' do
-      expect(result).to eq([{ kind: "sync", left: "4x", right: "6", suppressed: true }])
+    it 'returns both hands with correct throws' do
+      expect(result).to eq([{
+        index: 0, suppressed: true,
+        left:  { throws: [th("4x", 4, true)]  },
+        right: { throws: [th("6",  6, false)] },
+      }])
+    end
+  end
+
+  context 'with a multiplex left beat' do
+    let(:beats) do
+      [notation::SuppressedSyncBeat.new(
+        left:  notation::MultiplexThrow.new(throws: [
+          notation::Throw.new(value: 3, cross: false),
+          notation::Throw.new(value: 4, cross: false),
+        ]),
+        right: notation::Throw.new(value: 0, cross: false)
+      )]
+    end
+
+    it 'returns left with multiple throws, no right' do
+      expect(result).to eq([{
+        index: 0, suppressed: true,
+        left: { throws: [th("3", 3, false), th("4", 4, false)] },
+      }])
     end
   end
 
@@ -99,14 +126,14 @@ RSpec.describe Siteswap::Formatters::Beats do
       ]
     end
 
-    it 'classifies each beat correctly' do
+    it 'assigns correct index and classifies each beat' do
       expect(result).to eq([
-        { kind: "sync",  left: "4x", right: "6",  suppressed: true },
-        { kind: "rest",                            suppressed: true },
-        { kind: "right", right: "4x",             suppressed: true },
-        { kind: "left",  left: "5",               suppressed: true },
-        { kind: "right", right: "5",              suppressed: true },
-        { kind: "rest",                            suppressed: true },
+        { index: 0, suppressed: true, left: { throws: [th("4x", 4, true)] }, right: { throws: [th("6", 6, false)] } },
+        { index: 1, suppressed: true },
+        { index: 2, suppressed: true, right: { throws: [th("4x", 4, true)] } },
+        { index: 3, suppressed: true, left:  { throws: [th("5",  5, false)] } },
+        { index: 4, suppressed: true, right: { throws: [th("5",  5, false)] } },
+        { index: 5, suppressed: true },
       ])
     end
   end

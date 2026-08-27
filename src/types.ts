@@ -25,12 +25,12 @@ export type Rhythm = {
 
 export type Pattern = {
   id: string;
-  displayLabel?: string;
   halved: string;
   simplified: string;
   balls: number;
   state: string;
-  family: string;
+  family: string;   // base rhythm key, e.g. "3over2" (never includes _2cycle)
+  cycles: number;   // 1 or 2
   length: number;
   rhythm: Rhythm;
   beats: ApiBeat[];

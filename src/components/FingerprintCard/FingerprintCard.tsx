@@ -93,8 +93,14 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
     return () => cancelAnimationFrame(rafId);
   }, [n, leftBeats, rightBeats, animatorThrows]);
 
-  const leftInterval = n / leftBeats.length;
-  const rightInterval = n / rightBeats.length;
+  function handDesc(beats: number[]): string {
+    if (beats.length === 0) return "silent";
+    const intervals = beats.map((b, i) =>
+      i < beats.length - 1 ? beats[i + 1] - b : n - b
+    );
+    const allEqual = intervals.every(v => v === intervals[0]);
+    return allEqual ? `every ${intervals[0]} beats` : intervals.join(" · ");
+  }
 
   return (
     <div className="fingerprint-card">
@@ -203,8 +209,8 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       </svg>
 
       <div className="fingerprint-card__legend">
-        <span><span className="legend-swatch legend-swatch--l" />Left hand · every {leftInterval} beats</span>
-        <span><span className="legend-swatch legend-swatch--r" />Right hand · every {rightInterval} beats</span>
+        <span><span className="legend-swatch legend-swatch--l" />Left · {handDesc(leftBeats)}</span>
+        <span><span className="legend-swatch legend-swatch--r" />Right · {handDesc(rightBeats)}</span>
       </div>
     </div>
   );

@@ -31,19 +31,6 @@
   font-weight: 500;
   color: var(--text-hi);
   margin: 0 0 var(--s4);
-  position: relative;
-  padding-top: var(--s4);
-}
-
-.app__section-heading::before {
-  content: "";
-  display: block;
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--hairline-strong) 25%, var(--hairline-strong) 75%, transparent);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
 }
 
 /* ── Zone: within-pattern spacing ── */
@@ -53,16 +40,14 @@
 
 /* ── Zone: Generator ── */
 .app__generator {
-  margin-top: var(--s8);
-  max-width: 720px;
+  margin-top: var(--s6);
   background: var(--surface-1);
-  border: 1px solid var(--hairline);
   padding: var(--s6);
 }
 
 /* ── Zone: Presets gap ── */
 .app__generator + section {
-  margin-top: var(--s8);
+  margin-top: var(--s6);
 }
 
 /* ── Generate button ── */

@@ -40,16 +40,12 @@ RSpec.describe PolymorphicSiteswaps do
   end
 
   def individual_throw_sum(pattern)
-    pattern[:beats].flat_map do |b|
-      sides = case b[:kind]
-              when "multiplex" then b[:throws]
-              when "sync"      then [b[:left], b[:right]].compact
-              when "left"      then [b[:left]]
-              when "right"     then [b[:right]]
-              else              []
-              end
-      sides.flat_map { |s| parse_throw_values(s) }
-    end.sum
+    pattern[:beats].sum do |b|
+      hand_sum = 0
+      hand_sum += b[:left][:throws].sum  { |t| t[:value] } if b[:left]
+      hand_sum += b[:right][:throws].sum { |t| t[:value] } if b[:right]
+      hand_sum
+    end
   end
 
   def parse_throw_values(s)
@@ -211,16 +207,28 @@ RSpec.describe Siteswap::Formatters::Beats do
   context "with a left-hand multiplex, right empty" do
     let(:beats) { [mp_ssb(mp46, Siteswap::Notation::Throw.new(value: 0, cross: false), mp_hand: :left)] }
 
-    it "returns kind: multiplex with hand: left and throws array" do
-      expect(result).to eq([{ kind: "multiplex", hand: "left", throws: ["4", "6"], suppressed: true }])
+    it "returns left throws for both components, no right" do
+      expect(result).to eq([{
+        index: 0, suppressed: true,
+        left: { throws: [
+          { label: "4", value: 4, cross: false },
+          { label: "6", value: 6, cross: false },
+        ]},
+      }])
     end
   end
 
   context "with a right-hand multiplex, left empty" do
     let(:beats) { [mp_ssb(mp46, Siteswap::Notation::Throw.new(value: 0, cross: false), mp_hand: :right)] }
 
-    it "returns kind: multiplex with hand: right and throws array" do
-      expect(result).to eq([{ kind: "multiplex", hand: "right", throws: ["4", "6"], suppressed: true }])
+    it "returns right throws for both components, no left" do
+      expect(result).to eq([{
+        index: 0, suppressed: true,
+        right: { throws: [
+          { label: "4", value: 4, cross: false },
+          { label: "6", value: 6, cross: false },
+        ]},
+      }])
     end
   end
 end

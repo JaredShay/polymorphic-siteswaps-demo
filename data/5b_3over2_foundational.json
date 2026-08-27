@@ -1,1 +1,0 @@
-[{"halved":"(6x,6x)!(0,0)!(0,6)!(6,0)!(0,6)!(0,0)!","simplified":"(6x,6x)R6660","beats":[{"kind":"sync","left":"6x","right":"6x","suppressed":true},{"kind":"rest","suppressed":true},{"kind":"right","right":"6","suppressed":true},{"kind":"left","left":"6","suppressed":true},{"kind":"right","right":"6","suppressed":true},{"kind":"rest","suppressed":true}]}]

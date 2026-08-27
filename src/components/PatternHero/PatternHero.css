@@ -100,6 +100,10 @@
 }
 
 @media (max-width: 860px) {
+  .pattern-hero__viewer {
+    min-height: 300px;
+  }
+
   .pattern-hero__fingerprint {
     border-left: 0;
   }

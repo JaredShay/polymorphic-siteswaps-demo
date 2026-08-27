@@ -31,10 +31,18 @@ RSpec.describe 'generate → format integration' do
         "invalid simplified notation: #{pattern[:simplified].inspect}"
 
       expect(pattern[:beats]).to be_an(Array).and(satisfy { |a| !a.empty? })
-      pattern[:beats].each do |beat|
-        expect(%w[sync left right rest]).to include(beat[:kind])
-        expect(beat[:left]).to  match(/\A[0-9a-z{}x]+\z/) if beat.key?(:left)
-        expect(beat[:right]).to match(/\A[0-9a-z{}x]+\z/) if beat.key?(:right)
+      pattern[:beats].each_with_index do |beat, i|
+        expect(beat[:index]).to eq(i)
+        expect(beat[:suppressed]).to be(true).or be(false)
+        [:left, :right].each do |hand|
+          next unless beat.key?(hand)
+          expect(beat[hand]).to be_a(Hash).and include(:throws)
+          beat[hand][:throws].each do |t|
+            expect(t[:label]).to match(/\A[0-9a-z{}x]+\z/)
+            expect(t[:value]).to be_a(Integer)
+            expect(t[:cross]).to be(true).or be(false)
+          end
+        end
       end
     end
   end
