@@ -1,0 +1,33 @@
+@keyframes node-pulse {
+  from { transform: scale(1); opacity: 0.8; }
+  to   { transform: scale(3); opacity: 0; }
+}
+
+.node-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-pulse 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+.fingerprint-card {
+  background: transparent;
+  padding: var(--space-md) var(--space-md) 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.fingerprint-card__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+.fingerprint-ring-right {
+  stroke: var(--ring-right);
+}
+
+.fingerprint-ring-left {
+  stroke: var(--ring-left);
+}

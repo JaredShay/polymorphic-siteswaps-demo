@@ -1,0 +1,112 @@
+.notation-display {
+  position: relative;
+  padding: 22px 0;
+}
+
+.notation-display::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.1) 75%, transparent);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.notation-display__beats {
+  display: grid;
+  margin-bottom: 16px;
+}
+
+.notation-display__beats-layer {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.notation-display__beats-layer--active {
+  visibility: visible;
+}
+
+.beat-cycle {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.b-paren, .b-sep { color: #3a3450; }
+.b-zero           { color: #4a4468; }
+.b-rest           { color: #221d38; }
+.b-l              { color: var(--note-left); }
+.b-r              { color: var(--note-right); }
+.bb-l {
+  text-decoration-line: underline;
+  text-decoration-color: rgba(45, 226, 230, 0.55);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.bb-r {
+  text-decoration-line: underline;
+  text-decoration-color: rgba(255, 56, 100, 0.55);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.bb-sync { /* per-label underlines handled by bb-l / bb-r children */ }
+
+.pattern-beats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notation-display__text {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text);
+  word-break: break-all;
+  margin-bottom: 16px;
+}
+
+.notation-display__tools {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.notation-display__tool-btn {
+  background: none;
+  border: 0;
+  padding: 0 0 3px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  border-bottom: 1px solid var(--hair);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.notation-display__tool-btn:hover {
+  color: var(--ring-left);
+  border-color: var(--ring-left);
+}
+
+.notation-display__tool-btn:focus-visible {
+  outline: 2px solid var(--ring-right);
+  outline-offset: 3px;
+}
+
+.notation-display__tool-btn--active {
+  color: var(--ring-left);
+  border-color: var(--ring-left);
+}
+
+.notation-display__info {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 18px;
+}

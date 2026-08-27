@@ -1,0 +1,48 @@
+.rhythm-icon {
+  background: var(--bg);
+  padding: var(--space-md) var(--space-md) 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rhythm-icon__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.rhythm-icon__ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 0.6;
+}
+
+.rhythm-icon__poly-right {
+  stroke: var(--ring-right);
+  stroke-width: 1.8;
+  opacity: 0.9;
+}
+
+.rhythm-icon__poly-left {
+  stroke: var(--ring-left);
+  stroke-width: 1.8;
+  opacity: 0.9;
+}
+
+.rhythm-icon__name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 10px;
+  display: block;
+}
+
+.rhythm-icon__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: 3px;
+  display: block;
+}
