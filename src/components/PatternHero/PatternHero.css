@@ -48,8 +48,8 @@
 }
 
 .pattern-hero__tab--active {
-  color: var(--ring-right);
-  border-bottom-color: var(--ring-right);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .pattern-hero__viewer {

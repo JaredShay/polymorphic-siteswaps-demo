@@ -1,17 +1,32 @@
 .presets-grid__heading {
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  color: #fff;
-  margin: 0 0 var(--space-md);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--text-hi);
+  margin: 0 0 var(--s4);
+  position: relative;
+  padding-top: var(--s4);
+}
+
+.presets-grid__heading::before {
+  content: "";
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--hairline-strong) 25%, var(--hairline-strong) 75%, transparent);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .presets-grid__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1px;
-  background: var(--hair);
-  border: 1px solid var(--hair);
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
 }
 
 .presets-grid__card {
@@ -20,23 +35,22 @@
   cursor: pointer;
   border: none;
   text-align: left;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background 0.2s;
   display: block;
   width: 100%;
   position: relative;
 }
 
 .presets-grid__card:hover {
-  background: rgba(255, 56, 100, 0.03);
-  box-shadow: inset 0 0 0 1px rgba(255, 56, 100, 0.2), 0 0 10px rgba(255, 56, 100, 0.1);
+  background: var(--surface-1);
 }
 
 .presets-grid__card:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 1px var(--ring-left), 0 0 10px rgba(255, 56, 100, 0.25);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .presets-grid__card--active {
-  background: rgba(255, 56, 100, 0.05);
-  box-shadow: inset 0 0 0 1px rgba(255, 56, 100, 0.4), 0 0 14px rgba(255, 56, 100, 0.15);
+  background: var(--surface-1);
+  box-shadow: inset 2px 0 0 var(--accent);
 }

@@ -4,7 +4,7 @@
 
 html, body {
   margin: 0;
-  background: var(--bg);
+  background: var(--surface-0);
   color: var(--text);
   font-family: var(--font-display);
   font-weight: 300;

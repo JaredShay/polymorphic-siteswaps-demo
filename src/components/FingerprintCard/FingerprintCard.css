@@ -12,7 +12,7 @@
 
 .fingerprint-card {
   background: transparent;
-  padding: var(--space-md) var(--space-md) 14px;
+  padding: var(--s4) var(--s4) 14px;
   display: flex;
   flex-direction: column;
 }
@@ -23,11 +23,42 @@
   display: block;
 }
 
-
 .fingerprint-ring-right {
-  stroke: var(--ring-right);
+  stroke: var(--hand-r);
 }
 
 .fingerprint-ring-left {
-  stroke: var(--ring-left);
+  stroke: var(--hand-l);
+}
+
+.fingerprint-card__legend {
+  display: flex;
+  gap: var(--s5);
+  margin-top: var(--s3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-mid);
+  flex-wrap: wrap;
+}
+
+.fingerprint-card__legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.legend-swatch--l {
+  background: var(--hand-l);
+}
+
+.legend-swatch--r {
+  background: var(--hand-r);
 }

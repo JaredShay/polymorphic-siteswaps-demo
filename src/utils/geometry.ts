@@ -1,6 +1,6 @@
 // Color constants mirroring CSS tokens — single source of truth for dynamic SVG attributes
-export const RING_RIGHT = "#2DE2E6";
-export const RING_LEFT  = "#FF3864";
+export const RING_RIGHT = "#FF2D55";
+export const RING_LEFT  = "#22D3EE";
 
 export const SELF_LOOP_R = 28;
 

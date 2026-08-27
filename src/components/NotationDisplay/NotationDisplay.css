@@ -30,24 +30,24 @@
 
 .beat-cycle {
   font-family: var(--font-mono);
-  font-size: 18px;
-  line-height: 1.8;
+  font-size: 22px;
+  line-height: 1.85;
 }
 
 .b-paren, .b-sep { color: #3a3450; }
 .b-zero           { color: #4a4468; }
 .b-rest           { color: #221d38; }
-.b-l              { color: var(--note-left); }
-.b-r              { color: var(--note-right); }
+.b-l              { color: var(--hand-l); }
+.b-r              { color: var(--hand-r); }
 .bb-l {
   text-decoration-line: underline;
-  text-decoration-color: rgba(45, 226, 230, 0.55);
+  text-decoration-color: rgba(34, 211, 238, 0.55);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
 }
 .bb-r {
   text-decoration-line: underline;
-  text-decoration-color: rgba(255, 56, 100, 0.55);
+  text-decoration-color: rgba(255, 45, 85, 0.55);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
 }
@@ -61,7 +61,8 @@
 
 .notation-display__text {
   font-family: var(--font-mono);
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 1.85;
   color: var(--text);
   word-break: break-all;
   margin-bottom: 16px;
@@ -79,34 +80,34 @@
   padding: 0 0 3px;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text);
-  border-bottom: 1px solid var(--hair);
+  font-size: 13px;
+  letter-spacing: .02em;
+  text-transform: none;
+  color: var(--text-mid);
+  border-bottom: 1px solid var(--hairline);
   transition: color 0.15s, border-color 0.15s;
 }
 
 .notation-display__tool-btn:hover {
-  color: var(--ring-left);
-  border-color: var(--ring-left);
+  color: var(--text-hi);
+  border-color: var(--hairline-strong);
 }
 
 .notation-display__tool-btn:focus-visible {
-  outline: 2px solid var(--ring-right);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
 .notation-display__tool-btn--active {
-  color: var(--ring-left);
-  border-color: var(--ring-left);
+  color: var(--text-hi);
+  border-color: var(--hairline-strong);
 }
 
 .notation-display__info {
   font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.26em;
+  font-size: 15px;
+  letter-spacing: .22em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--text-hi);
   margin-bottom: 18px;
 }

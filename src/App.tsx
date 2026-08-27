@@ -27,6 +27,16 @@ function dataKey(balls: string, family: string, state: string) {
   return `data/${balls}b_${family}_${state}.json`;
 }
 
+function patternToFilters(p: Pattern): FilterState {
+  const isTwo = p.family.endsWith('_2cycle');
+  return {
+    balls:  new Set([String(p.balls)]),
+    family: new Set([p.family.replace(/_2cycle$/, '')]),
+    state:  new Set([p.state]),
+    cycles: new Set([isTwo ? '2' : '1']),
+  };
+}
+
 async function loadPatterns(filters: FilterState): Promise<GeneratedState[]> {
   const keys: { key: string; balls: number; family: string; state: string }[] = [];
   for (const b of filters.balls) {
@@ -70,12 +80,7 @@ async function loadPatterns(filters: FilterState): Promise<GeneratedState[]> {
 export default function App() {
   const [activePattern, setActivePattern] = useState<Pattern | null>(MOCK_PATTERNS[0]);
   const [generated, setGenerated] = useState<GeneratedState | null>(null);
-  const [filters, setFilters] = useState<FilterState>({
-    balls:  new Set(["4", "5"]),
-    family: new Set(["3over2", "4over3", "5over2", "5over3", "5over4", "332", "clave"]),
-    state:  new Set(["active", "ground"]),
-    cycles: new Set(["1", "2"]),
-  });
+  const [filters, setFilters] = useState<FilterState>(() => patternToFilters(MOCK_PATTERNS[0]));
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
 
@@ -83,6 +88,7 @@ export default function App() {
     setActivePattern(p);
     setGenerated(null);
     setGenerateError("");
+    setFilters(patternToFilters(p));
   }, []);
 
   async function handleGenerate() {
@@ -138,17 +144,17 @@ export default function App() {
         </div>
       )}
 
-      <div className="app__section">
+      <div className="app__generator">
+        <h2 className="app__section-heading">Build a pattern</h2>
         <FilterPanel filters={filters} onChange={setFilters} />
+        <button
+          className="app__generate-btn"
+          onClick={handleGenerate}
+          disabled={generating}
+        >
+          {generating ? "Loading…" : generateError || "Generate"}
+        </button>
       </div>
-
-      <button
-        className="app__generate-btn"
-        onClick={handleGenerate}
-        disabled={generating}
-      >
-        {generating ? "Loading…" : generateError || "Generate"}
-      </button>
 
       <PresetsGrid
         patterns={MOCK_PATTERNS}

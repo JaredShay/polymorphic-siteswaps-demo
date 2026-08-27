@@ -1,6 +1,6 @@
 .rhythm-icon {
   background: var(--bg);
-  padding: var(--space-md) var(--space-md) 14px;
+  padding: var(--s4) var(--s4) 14px;
   display: flex;
   flex-direction: column;
 }
@@ -18,31 +18,33 @@
 }
 
 .rhythm-icon__poly-right {
-  stroke: var(--ring-right);
+  stroke: var(--hand-r);
   stroke-width: 1.8;
   opacity: 0.9;
 }
 
 .rhythm-icon__poly-left {
-  stroke: var(--ring-left);
+  stroke: var(--hand-l);
   stroke-width: 1.8;
   opacity: 0.9;
 }
 
 .rhythm-icon__name {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
+  text-transform: none;
   margin-top: 10px;
   display: block;
 }
 
 .rhythm-icon__label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--dim);
+  font-size: 10px;
+  color: var(--text-mid);
   margin-top: 3px;
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

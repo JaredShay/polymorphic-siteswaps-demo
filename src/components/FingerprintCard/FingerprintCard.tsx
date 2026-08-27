@@ -93,6 +93,9 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
     return () => cancelAnimationFrame(rafId);
   }, [n, leftBeats, rightBeats, animatorThrows]);
 
+  const leftInterval = n / leftBeats.length;
+  const rightInterval = n / rightBeats.length;
+
   return (
     <div className="fingerprint-card">
       <svg viewBox="0 0 160 160" className="fingerprint-card__svg">
@@ -199,6 +202,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         <circle cx={pinkPos[0]} cy={pinkPos[1]} r={2} fill={RING_LEFT}  filter={`url(#${filterId})`} />
       </svg>
 
+      <div className="fingerprint-card__legend">
+        <span><span className="legend-swatch legend-swatch--l" />Left hand · every {leftInterval} beats</span>
+        <span><span className="legend-swatch legend-swatch--r" />Right hand · every {rightInterval} beats</span>
+      </div>
     </div>
   );
 }

@@ -1,15 +1,24 @@
 :root {
-  --bg: #141218;
-  --panel: #1e1924;
-  --hair: rgba(255, 255, 255, 0.09);
-  --dim: #5a5470;
-  --text: #c8c2d8;
+  --surface-0: #000;
+  --surface-1: #08080B;
+  --surface-2: #0E0E13;
 
-  --ring-right: #2DE2E6;
-  --ring-left:  #FF3864;
-  --note-left:  #2DE2E6;
-  --note-right: #FF3864;
-  --accent:     #F6019D;
+  --hairline:        rgba(255,255,255,.08);
+  --hairline-strong: rgba(255,255,255,.20);
+
+  --text:     #C7C7D2;
+  --text-hi:  #FFFFFF;
+  --text-mid: #8A8A96;
+  --text-low: #5A5A66;
+
+  --hand-l:       #22D3EE;
+  --hand-r:       #FF2D55;
+  --hand-l-mute:  rgba(34,211,238,.20);
+  --hand-r-mute:  rgba(255,45,85,.20);
+  --hand-l-ghost: rgba(34,211,238,.06);
+  --hand-r-ghost: rgba(255,45,85,.06);
+
+  --accent: #FFB25C;
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
@@ -20,9 +29,27 @@
 
   --label-col-width: 132px;
 
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 48px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 96px;
+
+  /* Legacy aliases — keeps unedited files working */
+  --bg:          var(--surface-0);
+  --panel:       var(--surface-1);
+  --hair:        var(--hairline);
+  --dim:         var(--text-low);
+  --ring-right:  var(--hand-r);
+  --ring-left:   var(--hand-l);
+  --note-left:   var(--hand-l);
+  --note-right:  var(--hand-r);
+  --space-xs:    var(--s1);
+  --space-sm:    var(--s2);
+  --space-md:    var(--s4);
+  --space-lg:    var(--s5);
+  --space-xl:    var(--s7);
 }
