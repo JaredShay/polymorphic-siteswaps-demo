@@ -8,9 +8,9 @@ export const BPS_BY_FAMILY: Record<string, number> = {
   "5over2": 5,
   "5over3": 7.5,
   "5over4": 10,
-  "332": 5,
-  "332_2cycle": 5,
-  clave: 5,
+  "332": 7.5,
+  "332_2cycle": 7.5,
+  clave: 7.5,
 };
 
 function hexToJlColor(hex: string): string {
