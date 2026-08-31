@@ -5,11 +5,13 @@
 This is a **static site**. The Ruby backend runs offline and writes JSON files to `data/`. The React frontend fetches these files directly; there is no runtime API.
 
 ### Stack
+
 - **Generator** (`lib/siteswap/`): Ruby, run via `generate_data.rb` → `data/*.json`
 - **Frontend** (`src/`): React + TypeScript
 - **Deploy**: build frontend, push to GitHub; the deploy workflow publishes it
 
 ### Backend modules
+
 - **Generator** (`generator.rb`): DFS search producing raw beat arrays
 - **Transforms** (`transforms.rb`): composable post-processing (Halve, CancelPairs, Expand) — display only, not core to generation
 - **Formatters** (`formatter.rb`): convert raw beat arrays to strings or structured beat data for the JSON schema
@@ -85,12 +87,14 @@ For evenly-spaced rhythms, the holes model alone guarantees zip throws never req
 **Proof:** Define a zip as a cross throw with value V ≤ functional_minimum = 2 × catching_hand_spacing. A zip from beat B lands at L = (B + V/2) % period. Since the holes model accepted it, L is an active catching-hand beat. The previous catching-hand beat before L is at L − spacing, where spacing ≥ catching_hand_spacing ≥ V/2. Therefore the previous catching-hand beat ≤ L − V/2 = B. No catching-hand beat falls in the open transit interval (B, L). ∎
 
 Concrete check (illustrative — 3-over-2, left spacing = 3, functional_min = 4):
+
 - Raw 4x from right at beat 4 → lands at (4+2)%6 = 0. Transit window: {5}. Left beats: {0,3}. No left beat in {5}. ✓
 - Raw 2x from right at beat 2 → lands at (2+1)%6 = 3. Transit window: empty. ✓
 
 This guarantee holds only for evenly-spaced rhythms where catching_hand_spacing is uniform. Non-uniform rhythms (e.g. 332) require per-direction analysis and may not hold for all throw values — those rhythms need more careful throw set design.
 
 ### Other generator constraints
+
 - Patterns must have at least one cross throw (enforced in `add_result`)
 - Mirror-symmetric patterns are deduplicated
 - Results are classified as `ground` or `active` against the analytically computed ground state
@@ -114,15 +118,15 @@ For non-uniform rhythms, **median** gap is used rather than minimum. The minimum
 
 ### Verification (current families — update when new rhythms are added)
 
-| Family | Right gaps       | Median R | Left gaps     | Median L | min | BPS  |
-|--------|-----------------|----------|---------------|----------|-----|------|
-| 3/2    | [2,2,2]         | 2        | [3,3]         | 3        | 2   | 5    |
-| 4/3    | [3,3,3,3]       | 3        | [4,4,4]       | 4        | 3   | 7.5  |
-| 5/2    | [2,2,2,2,2]     | 2        | [5,5]         | 5        | 2   | 5    |
-| 5/3    | [3,3,3,3,3]     | 3        | [5,5,5]       | 5        | 3   | 7.5  |
-| 5/4    | [4,4,4,4,4]     | 4        | [5,5,5,5]     | 5        | 4   | 10   |
-| 332    | [3,3,2]         | 3        | [4,4]         | 4        | 3   | 7.5  |
-| clave  | [3,3,4,2,4]     | 3        | [4,4,4,4]     | 4        | 3   | 7.5  |
+| Family | Right gaps  | Median R | Left gaps | Median L | min | BPS |
+| ------ | ----------- | -------- | --------- | -------- | --- | --- |
+| 3/2    | [2,2,2]     | 2        | [3,3]     | 3        | 2   | 5   |
+| 4/3    | [3,3,3,3]   | 3        | [4,4,4]   | 4        | 3   | 7.5 |
+| 5/2    | [2,2,2,2,2] | 2        | [5,5]     | 5        | 2   | 5   |
+| 5/3    | [3,3,3,3,3] | 3        | [5,5,5]   | 5        | 3   | 7.5 |
+| 5/4    | [4,4,4,4,4] | 4        | [5,5,5,5] | 5        | 4   | 10  |
+| 332    | [3,3,2]     | 3        | [4,4]     | 4        | 3   | 7.5 |
+| clave  | [3,3,4,2,4] | 3        | [4,4,4,4] | 4        | 3   | 7.5 |
 
 For new rhythms, compute BPS directly from the beat arrays in the spec using the formula above.
 
@@ -137,6 +141,7 @@ Transforms and formatters are applied after generation. They do not affect which
 - **Expand**: converts single-hand sync beats to async notation for readability
 
 ### Presets
+
 ```
 raw:     []
 halved:  [Halve]
