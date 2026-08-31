@@ -5,12 +5,11 @@ import "./RhythmIcon.css";
 interface Props {
   rhythm: Rhythm;
   name: string;
-  label: string;
 }
 
 const r = 52, cx = 64, cy = 64;
 
-export default function RhythmIcon({ rhythm, name, label }: Props) {
+export default function RhythmIcon({ rhythm, name }: Props) {
   const { n, leftBeats, rightBeats } = rhythm;
 
   return (
@@ -29,7 +28,6 @@ export default function RhythmIcon({ rhythm, name, label }: Props) {
         />
       </svg>
       <span className="rhythm-icon__name">{name}</span>
-      <span className="rhythm-icon__label">{label} · {n} beats</span>
     </div>
   );
 }

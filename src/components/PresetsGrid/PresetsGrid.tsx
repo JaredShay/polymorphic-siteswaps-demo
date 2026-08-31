@@ -21,7 +21,7 @@ export default memo(function PresetsGrid({ presets, activeFamilyId, onSelect }: 
             onClick={() => onSelect(p.id)}
             aria-pressed={activeFamilyId === p.id}
           >
-            <RhythmIcon rhythm={p.rhythm} name={p.label} label={`${p.rhythm.n} beats`} />
+            <RhythmIcon rhythm={p.rhythm} name={p.label} />
           </button>
         ))}
       </div>
