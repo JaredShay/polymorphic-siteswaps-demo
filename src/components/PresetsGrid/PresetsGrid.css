@@ -1,13 +1,12 @@
 .presets-grid__heading {
   font-family: var(--font-mono);
   font-size: 13px;
-  letter-spacing: .26em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
   font-weight: 500;
   color: var(--text-hi);
   margin: 0 0 var(--s4);
 }
-
 
 .presets-grid__grid {
   display: grid;

@@ -13,15 +13,28 @@ interface Props {
   state: string;
 }
 
-
-export default function NotationDisplay({ halved, simplified, notationBeats, family, balls, state }: Props) {
+export default function NotationDisplay({
+  halved,
+  simplified,
+  notationBeats,
+  family,
+  balls,
+  state,
+}: Props) {
   const [showSimplified, setShowSimplified] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy link");
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    },
+    [],
+  );
 
   const jugglingLabUrl = buildJugglingLabUrl(simplified, family, balls);
-  const stateLabel = state ? state.charAt(0).toUpperCase() + state.slice(1) : "";
+  const stateLabel = state
+    ? state.charAt(0).toUpperCase() + state.slice(1)
+    : "";
   const infoLabel = `${balls}b · ${FAMILY_LABEL[family] ?? family}${stateLabel ? " · " + stateLabel : ""}`;
 
   function handleCopy() {
@@ -36,10 +49,18 @@ export default function NotationDisplay({ halved, simplified, notationBeats, fam
       <div className="notation-display__info">{infoLabel}</div>
 
       <div className="notation-display__beats">
-        <div className={`notation-display__beats-layer${!showSimplified ? " notation-display__beats-layer--active" : ""}`}>
-          {notationBeats ? beatsHtml(notationBeats, family) : <div className="beat-cycle notation-display__text">{halved}</div>}
+        <div
+          className={`notation-display__beats-layer${!showSimplified ? " notation-display__beats-layer--active" : ""}`}
+        >
+          {notationBeats ? (
+            beatsHtml(notationBeats, family)
+          ) : (
+            <div className="beat-cycle notation-display__text">{halved}</div>
+          )}
         </div>
-        <div className={`notation-display__beats-layer${showSimplified ? " notation-display__beats-layer--active" : ""}`}>
+        <div
+          className={`notation-display__beats-layer${showSimplified ? " notation-display__beats-layer--active" : ""}`}
+        >
           <div className="beat-cycle notation-display__text">{simplified}</div>
         </div>
       </div>
@@ -56,7 +77,7 @@ export default function NotationDisplay({ halved, simplified, notationBeats, fam
         </a>
         <button
           className={`notation-display__tool-btn${showSimplified ? " notation-display__tool-btn--active" : ""}`}
-          onClick={() => setShowSimplified(s => !s)}
+          onClick={() => setShowSimplified((s) => !s)}
         >
           Simplify
         </button>

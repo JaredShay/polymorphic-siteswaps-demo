@@ -1,6 +1,12 @@
 @keyframes node-pulse {
-  from { transform: scale(1); opacity: 0.8; }
-  to   { transform: scale(3); opacity: 0; }
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
 }
 
 .node-pulse {

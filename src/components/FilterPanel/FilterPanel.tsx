@@ -14,17 +14,17 @@ function toggle(set: Set<string>, value: string): Set<string> {
   return next;
 }
 
-const BALLS   = ["4", "5"];
+const BALLS = ["4", "5"];
 const RHYTHMS = [
   { value: "3over2", label: "3:2" },
   { value: "4over3", label: "4:3" },
   { value: "5over2", label: "5:2" },
   { value: "5over3", label: "5:3" },
   { value: "5over4", label: "5:4" },
-  { value: "332",    label: "332" },
-  { value: "clave",  label: "Clave" },
+  { value: "332", label: "332" },
+  { value: "clave", label: "Clave" },
 ];
-const STATES  = [
+const STATES = [
   { value: "active", label: "Excited" },
   { value: "ground", label: "Ground" },
 ];
@@ -43,12 +43,15 @@ export default function FilterPanel({ filters, onChange }: Props) {
       <div className="filter-panel__row">
         <span className="filter-panel__label">Balls</span>
         <div className="filter-panel__chips">
-          {BALLS.map(v => (
+          {BALLS.map((v) => (
             <button
-              key={v} className="chip"
+              key={v}
+              className="chip"
               aria-pressed={filters.balls.has(v) ? "true" : "false"}
               onClick={() => handleToggle("balls", v)}
-            >{v}</button>
+            >
+              {v}
+            </button>
           ))}
         </div>
       </div>
@@ -58,10 +61,13 @@ export default function FilterPanel({ filters, onChange }: Props) {
         <div className="filter-panel__chips">
           {RHYTHMS.map(({ value, label }) => (
             <button
-              key={value} className="chip"
+              key={value}
+              className="chip"
               aria-pressed={filters.family.has(value) ? "true" : "false"}
               onClick={() => handleToggle("family", value)}
-            >{label}</button>
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
@@ -71,10 +77,13 @@ export default function FilterPanel({ filters, onChange }: Props) {
         <div className="filter-panel__chips">
           {STATES.map(({ value, label }) => (
             <button
-              key={value} className="chip"
+              key={value}
+              className="chip"
               aria-pressed={filters.state.has(value) ? "true" : "false"}
               onClick={() => handleToggle("state", value)}
-            >{label}</button>
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
@@ -84,10 +93,13 @@ export default function FilterPanel({ filters, onChange }: Props) {
         <div className="filter-panel__chips">
           {PERIODS.map(({ value, label }) => (
             <button
-              key={value} className="chip"
+              key={value}
+              className="chip"
               aria-pressed={filters.cycles.has(value) ? "true" : "false"}
               onClick={() => handleToggle("cycles", value)}
-            >{label}</button>
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>

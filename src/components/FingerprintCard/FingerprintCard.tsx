@@ -2,8 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import type { ApiBeat, Rhythm } from "../../types";
 import { toAnimatorThrows } from "../../utils/beats";
 import {
-  beatPoint, ringPathFromBeats, verticesFromBeats,
-  chordParams, circularArcPath, SELF_LOOP_R, RING_RIGHT, RING_LEFT,
+  beatPoint,
+  ringPathFromBeats,
+  verticesFromBeats,
+  chordParams,
+  circularArcPath,
+  SELF_LOOP_R,
+  RING_RIGHT,
+  RING_LEFT,
 } from "../../utils/geometry";
 import { throwEasing, pointOnPolygon, LOOP_MS } from "../../utils/animation";
 import { siteswapLabel } from "../../utils/notation";
@@ -17,12 +23,16 @@ interface Props {
 
 export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const { n, leftBeats, rightBeats } = rhythm;
-  const r = 60, cx = 80, cy = 80;
+  const r = 60,
+    cx = 80,
+    cy = 80;
   const filterId = `glow-${uid}`;
 
   const [tealPos, setTealPos] = useState<[number, number]>([cx, cy - r]);
   const [pinkPos, setPinkPos] = useState<[number, number]>([cx, cy - r]);
-  const [nodePulses, setNodePulses] = useState<Record<number, { key: number; color: string }>>({});
+  const [nodePulses, setNodePulses] = useState<
+    Record<number, { key: number; color: string }>
+  >({});
   const [arcTs, setArcTs] = useState<(number | null)[]>([]);
 
   const animatorThrows = useMemo(() => toAnimatorThrows(beats), [beats]);
@@ -49,17 +59,19 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       lastTime = time;
 
       setTealPos(pointOnPolygon(tealVerts, progress));
-      const tealEdge = Math.floor(progress * tealVerts.length) % tealVerts.length;
+      const tealEdge =
+        Math.floor(progress * tealVerts.length) % tealVerts.length;
       const tealHit = tealEdge !== lastTealEdge;
       if (tealHit) lastTealEdge = tealEdge;
 
       setPinkPos(pointOnPolygon(pinkVerts, progress));
-      const pinkEdge = Math.floor(progress * pinkVerts.length) % pinkVerts.length;
+      const pinkEdge =
+        Math.floor(progress * pinkVerts.length) % pinkVerts.length;
       const pinkHit = pinkEdge !== lastPinkEdge;
       if (pinkHit) lastPinkEdge = pinkEdge;
 
       if (tealHit || pinkHit) {
-        setNodePulses(prev => {
+        setNodePulses((prev) => {
           const next = { ...prev };
           if (tealHit) {
             const beat = rightBeats[tealEdge];
@@ -71,7 +83,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
             if (sameAsTeal) {
               next[beat] = { ...next[beat], color: "#fff" };
             } else {
-              next[beat] = { key: (prev[beat]?.key ?? 0) + 1, color: RING_LEFT };
+              next[beat] = {
+                key: (prev[beat]?.key ?? 0) + 1,
+                color: RING_LEFT,
+              };
             }
           }
           return next;
@@ -80,10 +95,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
       setArcTs(
         throwTiming.map(({ throwStart, throwDuration }) => {
-          const elapsed = ((progress - throwStart) % 1 + 1) % 1;
+          const elapsed = (((progress - throwStart) % 1) + 1) % 1;
           if (elapsed > throwDuration) return null;
           return elapsed / throwDuration;
-        })
+        }),
       );
 
       rafId = requestAnimationFrame(tick);
@@ -96,9 +111,9 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   function handDesc(beats: number[]): string {
     if (beats.length === 0) return "silent";
     const intervals = beats.map((b, i) =>
-      i < beats.length - 1 ? beats[i + 1] - b : n - b
+      i < beats.length - 1 ? beats[i + 1] - b : n - b,
     );
-    const allEqual = intervals.every(v => v === intervals[0]);
+    const allEqual = intervals.every((v) => v === intervals[0]);
     return allEqual ? `every ${intervals[0]} beats` : intervals.join(" · ");
   }
 
@@ -115,12 +130,29 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           </filter>
         </defs>
 
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={0.3} />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,.08)"
+          strokeWidth={0.3}
+        />
 
-        <path d={ringPathFromBeats(rightBeats, n, r, cx, cy)} fill="none"
-              className="fingerprint-ring-right" strokeWidth={0.5} opacity={0.6} />
-        <path d={ringPathFromBeats(leftBeats, n, r, cx, cy)} fill="none"
-              className="fingerprint-ring-left" strokeWidth={0.5} opacity={0.6} />
+        <path
+          d={ringPathFromBeats(rightBeats, n, r, cx, cy)}
+          fill="none"
+          className="fingerprint-ring-right"
+          strokeWidth={0.5}
+          opacity={0.6}
+        />
+        <path
+          d={ringPathFromBeats(leftBeats, n, r, cx, cy)}
+          fill="none"
+          className="fingerprint-ring-left"
+          strokeWidth={0.5}
+          opacity={0.6}
+        />
 
         {Array.from({ length: n }, (_, beat) => {
           const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
@@ -129,21 +161,42 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           const ty2 = cy + (r + 3.5) * Math.sin(ang);
           const lx = cx + (r + 9) * Math.cos(ang);
           const ly = cy + (r + 9) * Math.sin(ang);
-          const isLeft  = leftBeats.includes(beat);
+          const isLeft = leftBeats.includes(beat);
           const isRight = rightBeats.includes(beat);
-          const dotColor = isLeft && isRight ? "#fff" : isRight ? RING_RIGHT : isLeft ? RING_LEFT : null;
+          const dotColor =
+            isLeft && isRight
+              ? "#fff"
+              : isRight
+                ? RING_RIGHT
+                : isLeft
+                  ? RING_LEFT
+                  : null;
           return (
             <g key={beat}>
-              <line x1={x.toFixed(1)} y1={y.toFixed(1)} x2={tx2.toFixed(1)} y2={ty2.toFixed(1)}
-                    stroke="rgba(255,255,255,.12)" strokeWidth={0.3} />
-              <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
-                    fontSize={3.5} fill="rgba(255,255,255,.22)" fontFamily="monospace">
+              <line
+                x1={x.toFixed(1)}
+                y1={y.toFixed(1)}
+                x2={tx2.toFixed(1)}
+                y2={ty2.toFixed(1)}
+                stroke="rgba(255,255,255,.12)"
+                strokeWidth={0.3}
+              />
+              <text
+                x={lx.toFixed(1)}
+                y={ly.toFixed(1)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={3.5}
+                fill="rgba(255,255,255,.22)"
+                fontFamily="monospace"
+              >
                 {siteswapLabel(beat)}
               </text>
-              {dotColor
-                ? <circle cx={x} cy={y} r={1.8} fill={dotColor} />
-                : <circle cx={x} cy={y} r={0.6} fill="rgba(255,255,255,.08)" />
-              }
+              {dotColor ? (
+                <circle cx={x} cy={y} r={1.8} fill={dotColor} />
+              ) : (
+                <circle cx={x} cy={y} r={0.6} fill="rgba(255,255,255,.08)" />
+              )}
             </g>
           );
         })}
@@ -152,8 +205,16 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           const beat = Number(beatStr);
           const [x, y] = beatPoint(beat, n, r, cx, cy);
           return (
-            <circle key={`${beat}-${key}`} cx={x} cy={y} r={2.5}
-                    fill="none" stroke={color} strokeWidth={0.5} className="node-pulse" />
+            <circle
+              key={`${beat}-${key}`}
+              cx={x}
+              cy={y}
+              r={2.5}
+              fill="none"
+              stroke={color}
+              strokeWidth={0.5}
+              className="node-pulse"
+            />
           );
         })}
 
@@ -172,45 +233,116 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
             const beatAng = (-90 + thr.beat * (360 / n)) * (Math.PI / 180);
             const ox = bx - SELF_LOOP_R * Math.cos(beatAng);
             const oy = by - SELF_LOOP_R * Math.sin(beatAng);
-            const sx = bx, sy = by;
+            const sx = bx,
+              sy = by;
             const endAng = beatAng + tEased * 2 * Math.PI;
             const ex = ox + SELF_LOOP_R * Math.cos(endAng);
             const ey = oy + SELF_LOOP_R * Math.sin(endAng);
-            const d = circularArcPath(ox, oy, SELF_LOOP_R, beatAng, tEased * 2 * Math.PI);
+            const d = circularArcPath(
+              ox,
+              oy,
+              SELF_LOOP_R,
+              beatAng,
+              tEased * 2 * Math.PI,
+            );
             return [
               <defs key={`${gradId}-d`}>
-                <linearGradient id={gradId} x1={sx} y1={sy} x2={ex} y2={ey} gradientUnits="userSpaceOnUse">
+                <linearGradient
+                  id={gradId}
+                  x1={sx}
+                  y1={sy}
+                  x2={ex}
+                  y2={ey}
+                  gradientUnits="userSpaceOnUse"
+                >
                   <stop offset="0%" stopColor={color} stopOpacity={0} />
-                  <stop offset="100%" stopColor={color} stopOpacity={headOpacity} />
+                  <stop
+                    offset="100%"
+                    stopColor={color}
+                    stopOpacity={headOpacity}
+                  />
                 </linearGradient>
               </defs>,
-              <path key={gradId} d={d} fill="none" stroke={`url(#${gradId})`} strokeWidth={0.7} strokeLinecap="round" />,
+              <path
+                key={gradId}
+                d={d}
+                fill="none"
+                stroke={`url(#${gradId})`}
+                strokeWidth={0.7}
+                strokeLinecap="round"
+              />,
             ];
           }
 
-          const { x1, y1, mx, my, x2, y2 } = chordParams(thr.beat, thr.value, n, r, cx, cy);
-          const q0x = x1 + (mx - x1) * tEased, q0y = y1 + (my - y1) * tEased;
-          const q1x = mx + (x2 - mx) * tEased, q1y = my + (y2 - my) * tEased;
-          const ex = q0x + (q1x - q0x) * tEased, ey = q0y + (q1y - q0y) * tEased;
+          const { x1, y1, mx, my, x2, y2 } = chordParams(
+            thr.beat,
+            thr.value,
+            n,
+            r,
+            cx,
+            cy,
+          );
+          const q0x = x1 + (mx - x1) * tEased,
+            q0y = y1 + (my - y1) * tEased;
+          const q1x = mx + (x2 - mx) * tEased,
+            q1y = my + (y2 - my) * tEased;
+          const ex = q0x + (q1x - q0x) * tEased,
+            ey = q0y + (q1y - q0y) * tEased;
           const d = `M${x1.toFixed(1)} ${y1.toFixed(1)} Q${q0x.toFixed(1)} ${q0y.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
           return [
             <defs key={`${gradId}-d`}>
-              <linearGradient id={gradId} x1={x1} y1={y1} x2={ex} y2={ey} gradientUnits="userSpaceOnUse">
+              <linearGradient
+                id={gradId}
+                x1={x1}
+                y1={y1}
+                x2={ex}
+                y2={ey}
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop offset="0%" stopColor={color} stopOpacity={0} />
-                <stop offset="100%" stopColor={color} stopOpacity={headOpacity} />
+                <stop
+                  offset="100%"
+                  stopColor={color}
+                  stopOpacity={headOpacity}
+                />
               </linearGradient>
             </defs>,
-            <path key={gradId} d={d} fill="none" stroke={`url(#${gradId})`} strokeWidth={0.7} strokeLinecap="round" />,
+            <path
+              key={gradId}
+              d={d}
+              fill="none"
+              stroke={`url(#${gradId})`}
+              strokeWidth={0.7}
+              strokeLinecap="round"
+            />,
           ];
         })}
 
-        <circle cx={tealPos[0]} cy={tealPos[1]} r={2} fill={RING_RIGHT} filter={`url(#${filterId})`} />
-        <circle cx={pinkPos[0]} cy={pinkPos[1]} r={2} fill={RING_LEFT}  filter={`url(#${filterId})`} />
+        <circle
+          cx={tealPos[0]}
+          cy={tealPos[1]}
+          r={2}
+          fill={RING_RIGHT}
+          filter={`url(#${filterId})`}
+        />
+        <circle
+          cx={pinkPos[0]}
+          cy={pinkPos[1]}
+          r={2}
+          fill={RING_LEFT}
+          filter={`url(#${filterId})`}
+        />
       </svg>
 
       <div className="fingerprint-card__legend">
-        <span><span className="legend-swatch legend-swatch--l" />Left · {handDesc(leftBeats)}</span>
-        <span><span className="legend-swatch legend-swatch--r" />Right · {handDesc(rightBeats)}</span>
+        <span>
+          <span className="legend-swatch legend-swatch--l" />
+          Left · {handDesc(leftBeats)}
+        </span>
+        <span>
+          <span className="legend-swatch legend-swatch--r" />
+          Right · {handDesc(rightBeats)}
+        </span>
       </div>
     </div>
   );

@@ -14,12 +14,18 @@ type FilePattern = Omit<Pattern, "id" | "family">;
 
 // ── URL helpers ────────────────────────────────────────────────────────────────
 
-type UrlPattern = { halved: string; balls: number; family: string; state: string; cycles: number };
+type UrlPattern = {
+  halved: string;
+  balls: number;
+  family: string;
+  state: string;
+  cycles: number;
+};
 
 const DEFAULT_FILTERS: FilterState = {
-  balls:  new Set(["4", "5"]),
+  balls: new Set(["4", "5"]),
   family: new Set(["3over2"]),
-  state:  new Set(["ground", "active"]),
+  state: new Set(["ground", "active"]),
   cycles: new Set(["1"]),
 };
 
@@ -28,19 +34,32 @@ function parseSet(raw: string | null, fallback: string): Set<string> {
   return set.size > 0 ? set : new Set(fallback.split(",").filter(Boolean));
 }
 
-function parseInitialState(): { urlPattern: UrlPattern | null; initialFilters: FilterState } {
-  const p   = new URLSearchParams(location.search);
-  const ph  = p.get("ph"), pb = p.get("pb"), pf = p.get("pf");
-  const ps  = p.get("ps"), pc = p.get("pc");
+function parseInitialState(): {
+  urlPattern: UrlPattern | null;
+  initialFilters: FilterState;
+} {
+  const p = new URLSearchParams(location.search);
+  const ph = p.get("ph"),
+    pb = p.get("pb"),
+    pf = p.get("pf");
+  const ps = p.get("ps"),
+    pc = p.get("pc");
 
-  const urlPattern = (ph && pb && pf && ps && pc)
-    ? { halved: ph, balls: parseInt(pb), family: pf, state: ps, cycles: parseInt(pc) }
-    : null;
+  const urlPattern =
+    ph && pb && pf && ps && pc
+      ? {
+          halved: ph,
+          balls: parseInt(pb),
+          family: pf,
+          state: ps,
+          cycles: parseInt(pc),
+        }
+      : null;
 
   const initialFilters: FilterState = {
-    balls:  parseSet(p.get("fb"), "4,5"),
+    balls: parseSet(p.get("fb"), "4,5"),
     family: parseSet(p.get("ff"), "3over2"),
-    state:  parseSet(p.get("fs"), "ground,active"),
+    state: parseSet(p.get("fs"), "ground,active"),
     cycles: parseSet(p.get("fc"), "1"),
   };
 
@@ -60,14 +79,18 @@ function buildUrl(pattern: Pattern, filters: FilterState): string {
     fc: Array.from(filters.cycles).sort().join(","),
   });
   // Keep siteswap characters readable — these are all safe in query strings
-  const qs = params.toString()
-    .replace(/%28/g, "(").replace(/%29/g, ")")
-    .replace(/%2C/g, ",").replace(/%21/g, "!");
+  const qs = params
+    .toString()
+    .replace(/%28/g, "(")
+    .replace(/%29/g, ")")
+    .replace(/%2C/g, ",")
+    .replace(/%21/g, "!");
   return `${location.origin}${location.pathname}?${qs}`;
 }
 
 // Parsed once on module load
-const { urlPattern: INIT_PATTERN, initialFilters: INIT_FILTERS } = parseInitialState();
+const { urlPattern: INIT_PATTERN, initialFilters: INIT_FILTERS } =
+  parseInitialState();
 
 // ── Data loading ───────────────────────────────────────────────────────────────
 
@@ -79,9 +102,12 @@ async function loadFamily(family: string): Promise<FilePattern[]> {
   if (cached !== undefined) return cached;
 
   const promise = fetch(`data/${family}.json`)
-    .then(r => (r.ok ? r.json() : []) as Promise<FilePattern[]>)
+    .then((r) => (r.ok ? r.json() : []) as Promise<FilePattern[]>)
     .catch(() => [] as FilePattern[])
-    .then(data => { patternCache[family] = data; return data; });
+    .then((data) => {
+      patternCache[family] = data;
+      return data;
+    });
   patternCache[family] = promise;
   return promise;
 }
@@ -146,10 +172,13 @@ export default function App() {
 
   async function loadFromUrl(up: UrlPattern, f: FilterState) {
     try {
-      const data  = await loadFamily(up.family);
-      const found = data.find(p =>
-        p.halved === up.halved && p.balls === up.balls &&
-        p.state  === up.state  && p.cycles === up.cycles
+      const data = await loadFamily(up.family);
+      const found = data.find(
+        (p) =>
+          p.halved === up.halved &&
+          p.balls === up.balls &&
+          p.state === up.state &&
+          p.cycles === up.cycles,
       );
       if (found) {
         setActivePattern(toPattern(found, up.family));
@@ -171,12 +200,15 @@ export default function App() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelectPreset = useCallback((familyId: string) => {
-    const next = { ...filters, family: new Set([familyId]) };
-    setFilters(next);
-    setGenerateError("");
-    generateWithFilters(next);
-  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleSelectPreset = useCallback(
+    (familyId: string) => {
+      const next = { ...filters, family: new Set([familyId]) };
+      setFilters(next);
+      setGenerateError("");
+      generateWithFilters(next);
+    },
+    [filters],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleGenerate() {
     generateWithFilters(filters);
@@ -199,7 +231,11 @@ export default function App() {
         activePattern={activePattern}
         generatedUrl={
           activePattern
-            ? buildJugglingLabUrl(activePattern.simplified, displayFamily(activePattern), activePattern.balls)
+            ? buildJugglingLabUrl(
+                activePattern.simplified,
+                displayFamily(activePattern),
+                activePattern.balls,
+              )
             : undefined
         }
       />

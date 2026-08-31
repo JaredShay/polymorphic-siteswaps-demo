@@ -16,8 +16,12 @@ export default function PatternHero({ activePattern, generatedUrl }: Props) {
   const [tab, setTab] = useState<HeroTab>("live");
 
   const src = activePattern
-    ? buildJugglingLabUrl(activePattern.simplified, activePattern.family, activePattern.balls)
-    : generatedUrl ?? "";
+    ? buildJugglingLabUrl(
+        activePattern.simplified,
+        activePattern.family,
+        activePattern.balls,
+      )
+    : (generatedUrl ?? "");
 
   useEffect(() => {
     setIframeReady(false);
@@ -45,7 +49,9 @@ export default function PatternHero({ activePattern, generatedUrl }: Props) {
       </nav>
 
       <div className="pattern-hero__viewer">
-        {!iframeReady && src && <span className="pattern-hero__status">Rendering…</span>}
+        {!iframeReady && src && (
+          <span className="pattern-hero__status">Rendering…</span>
+        )}
         {src && (
           <iframe
             key={src}
@@ -70,7 +76,14 @@ export default function PatternHero({ activePattern, generatedUrl }: Props) {
         ) : (
           <div className="pattern-hero__placeholder">
             <svg viewBox="0 0 160 160" aria-hidden="true">
-              <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth={0.5} />
+              <circle
+                cx="80"
+                cy="80"
+                r="60"
+                fill="none"
+                stroke="rgba(255,255,255,.4)"
+                strokeWidth={0.5}
+              />
               <circle cx="80" cy="80" r="3" fill="rgba(255,255,255,.3)" />
             </svg>
           </div>

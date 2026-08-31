@@ -2,13 +2,15 @@ export const LOOP_MS = 4000;
 
 // Fast at release, slow at apex, fast at catch.
 export function throwEasing(t: number): number {
-  const physical = t < 0.5
-    ? Math.sin(Math.PI * t) / 2
-    : 1 - Math.sin(Math.PI * t) / 2;
+  const physical =
+    t < 0.5 ? Math.sin(Math.PI * t) / 2 : 1 - Math.sin(Math.PI * t) / 2;
   return 0.35 * physical + 0.65 * t;
 }
 
-export function pointOnPolygon(verts: [number, number][], progress: number): [number, number] {
+export function pointOnPolygon(
+  verts: [number, number][],
+  progress: number,
+): [number, number] {
   const total = progress * verts.length;
   const edge = Math.floor(total) % verts.length;
   const t = total - Math.floor(total);

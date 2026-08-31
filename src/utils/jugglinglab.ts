@@ -1,16 +1,16 @@
 import { RING_RIGHT, RING_LEFT } from "./geometry";
 
 export const BPS_BY_FAMILY: Record<string, number> = {
-  "3over2":        5,
+  "3over2": 5,
   "3over2_2cycle": 5,
-  "4over3":        7.5,
+  "4over3": 7.5,
   "4over3_2cycle": 7.5,
-  "5over2":        5,
-  "5over3":        7.5,
-  "5over4":        10,
-  "332":           5,
-  "332_2cycle":    5,
-  "clave":         5,
+  "5over2": 5,
+  "5over3": 7.5,
+  "5over4": 10,
+  "332": 5,
+  "332_2cycle": 5,
+  clave: 5,
 };
 
 function hexToJlColor(hex: string): string {
@@ -23,10 +23,16 @@ function hexToJlColor(hex: string): string {
 function buildColorsParam(balls: number): string {
   const a = hexToJlColor(RING_RIGHT);
   const b = hexToJlColor(RING_LEFT);
-  return Array.from({ length: balls }, (_, i) => (i % 2 === 0 ? a : b)).join("");
+  return Array.from({ length: balls }, (_, i) => (i % 2 === 0 ? a : b)).join(
+    "",
+  );
 }
 
-export function buildJugglingLabUrl(simplified: string, family: string, balls: number): string {
+export function buildJugglingLabUrl(
+  simplified: string,
+  family: string,
+  balls: number,
+): string {
   const bps = BPS_BY_FAMILY[family] ?? 5;
   const colors = buildColorsParam(balls);
   return `https://jugglinglab.org/anim?pattern=${encodeURIComponent(simplified)};bps=${bps};dwell=1.5;colors=${colors};fps=50`;

@@ -1,28 +1,55 @@
 // Color constants mirroring CSS tokens — single source of truth for dynamic SVG attributes
 export const RING_RIGHT = "#FF2D55";
-export const RING_LEFT  = "#22D3EE";
+export const RING_LEFT = "#22D3EE";
 
 export const SELF_LOOP_R = 28;
 
-export function beatPoint(beat: number, n: number, r: number, cx: number, cy: number): [number, number] {
+export function beatPoint(
+  beat: number,
+  n: number,
+  r: number,
+  cx: number,
+  cy: number,
+): [number, number] {
   const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
   return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
 }
 
-export function ringPathFromBeats(beats: number[], n: number, r: number, cx: number, cy: number): string {
-  return beats
-    .map((beat, j) => {
-      const [x, y] = beatPoint(beat, n, r, cx, cy);
-      return `${j === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(" ") + " Z";
+export function ringPathFromBeats(
+  beats: number[],
+  n: number,
+  r: number,
+  cx: number,
+  cy: number,
+): string {
+  return (
+    beats
+      .map((beat, j) => {
+        const [x, y] = beatPoint(beat, n, r, cx, cy);
+        return `${j === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ") + " Z"
+  );
 }
 
-export function verticesFromBeats(beats: number[], n: number, r: number, cx: number, cy: number): [number, number][] {
+export function verticesFromBeats(
+  beats: number[],
+  n: number,
+  r: number,
+  cx: number,
+  cy: number,
+): [number, number][] {
   return beats.map((beat) => beatPoint(beat, n, r, cx, cy));
 }
 
-export function chordParams(beat: number, value: number, n: number, r: number, cx: number, cy: number) {
+export function chordParams(
+  beat: number,
+  value: number,
+  n: number,
+  r: number,
+  cx: number,
+  cy: number,
+) {
   const [x1, y1] = beatPoint(beat, n, r, cx, cy);
   const [x2, y2] = beatPoint((beat + value) % n, n, r, cx, cy);
   const bow = 0.16 + value / 40;
@@ -31,7 +58,13 @@ export function chordParams(beat: number, value: number, n: number, r: number, c
   return { x1, y1, mx, my, x2, y2 };
 }
 
-export function circularArcPath(ox: number, oy: number, R: number, startAng: number, sweep: number): string {
+export function circularArcPath(
+  ox: number,
+  oy: number,
+  R: number,
+  startAng: number,
+  sweep: number,
+): string {
   if (Math.abs(sweep) < 0.0001) return "";
   const steps = Math.ceil(Math.abs(sweep) / (Math.PI / 2));
   const delta = sweep / steps;

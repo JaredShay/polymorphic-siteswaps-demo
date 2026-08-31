@@ -17,12 +17,12 @@ min_cross_value = 2 * min(left_beat_spacing, right_beat_spacing)
 ```
 
 | Polyrhythm | Faster hand spacing | Functional minimum |
-|---|---|---|
-| 3 / 2 | 2 (R every 2 beats) | 4 |
-| 4 / 3 | 3 (R every 3 beats) | 6 |
-| 5 / 2 | 2 (R every 2 beats) | 4 |
-| 5 / 3 | 3 (R every 3 beats) | 6 |
-| 5 / 4 | 4 (R every 4 beats) | 8 |
+| ---------- | ------------------- | ------------------ |
+| 3 / 2      | 2 (R every 2 beats) | 4                  |
+| 4 / 3      | 3 (R every 3 beats) | 6                  |
+| 5 / 2      | 2 (R every 2 beats) | 4                  |
+| 5 / 3      | 3 (R every 3 beats) | 6                  |
+| 5 / 4      | 4 (R every 4 beats) | 8                  |
 
 Throws at or below the functional minimum are **zips** — the polyrhythmic equivalent of a 1 in vanilla siteswap or 2x in standard sync. At the sped-up tempo, they happen so fast that they function like quick hand-to-hand passes.
 

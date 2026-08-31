@@ -42,7 +42,10 @@
   border-radius: var(--radius-chip);
   padding: 8px 16px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .chip:hover {

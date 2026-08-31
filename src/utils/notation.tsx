@@ -1,16 +1,16 @@
 import type { NotationBeat } from "./beats";
 
 export const FAMILY_LABEL: Record<string, string> = {
-  "3over2":        "3 / 2",
+  "3over2": "3 / 2",
   "3over2_2cycle": "3 / 2 · 2 cycle",
-  "4over3":        "4 / 3",
+  "4over3": "4 / 3",
   "4over3_2cycle": "4 / 3 · 2 cycle",
-  "5over2":        "5 / 2",
-  "5over3":        "5 / 3",
-  "5over4":        "5 / 4",
-  "332":           "332",
-  "332_2cycle":    "332 · 2 cycle",
-  "clave":         "Clave",
+  "5over2": "5 / 2",
+  "5over3": "5 / 3",
+  "5over4": "5 / 4",
+  "332": "332",
+  "332_2cycle": "332 · 2 cycle",
+  clave: "Clave",
 };
 
 export function siteswapLabel(n: number): string {

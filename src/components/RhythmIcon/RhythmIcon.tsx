@@ -7,14 +7,20 @@ interface Props {
   name: string;
 }
 
-const r = 52, cx = 64, cy = 64;
+const r = 52,
+  cx = 64,
+  cy = 64;
 
 export default function RhythmIcon({ rhythm, name }: Props) {
   const { n, leftBeats, rightBeats } = rhythm;
 
   return (
     <div className="rhythm-icon">
-      <svg viewBox="0 0 128 128" className="rhythm-icon__svg" aria-hidden="true">
+      <svg
+        viewBox="0 0 128 128"
+        className="rhythm-icon__svg"
+        aria-hidden="true"
+      >
         <circle cx={cx} cy={cy} r={r} className="rhythm-icon__ring" />
         <path
           d={ringPathFromBeats(rightBeats, n, r, cx, cy)}

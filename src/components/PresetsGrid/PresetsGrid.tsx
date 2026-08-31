@@ -9,7 +9,11 @@ interface Props {
   onSelect: (familyId: string) => void;
 }
 
-export default memo(function PresetsGrid({ presets, activeFamilyId, onSelect }: Props) {
+export default memo(function PresetsGrid({
+  presets,
+  activeFamilyId,
+  onSelect,
+}: Props) {
   return (
     <section>
       <h2 className="presets-grid__heading">Rhythms</h2>
