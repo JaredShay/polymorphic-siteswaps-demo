@@ -11,7 +11,12 @@ import {
 import type { SuppressedSyncBeat, NotationElement } from "./notation";
 
 // Helper: build a SuppressedSyncBeat array for tests
-function ssb(lv: number, lx: boolean, rv: number, rx: boolean): SuppressedSyncBeat {
+function ssb(
+  lv: number,
+  lx: boolean,
+  rv: number,
+  rx: boolean,
+): SuppressedSyncBeat {
   return mkSuppressed(mkThrow(lv, lx), mkThrow(rv, rx));
 }
 
@@ -84,14 +89,18 @@ describe("applyCancelPairs", () => {
 
 describe("applyExpand", () => {
   it("expands suppressed empty beat to a single EmptySlot", () => {
-    const input: NotationElement[] = [mkSuppressed(mkThrow(0, false), mkThrow(0, false))];
+    const input: NotationElement[] = [
+      mkSuppressed(mkThrow(0, false), mkThrow(0, false)),
+    ];
     const result = applyExpand(input);
     expect(result).toHaveLength(1);
     expect(result[0].kind).toBe("empty");
   });
 
   it("expands suppressed single-hand right beat to [annotation, async]", () => {
-    const input: NotationElement[] = [mkSuppressed(mkThrow(0, false), mkThrow(4, false))];
+    const input: NotationElement[] = [
+      mkSuppressed(mkThrow(0, false), mkThrow(4, false)),
+    ];
     const result = applyExpand(input);
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual(mkAnnotation("right"));
@@ -99,7 +108,9 @@ describe("applyExpand", () => {
   });
 
   it("expands suppressed single-hand left beat to [annotation, async]", () => {
-    const input: NotationElement[] = [mkSuppressed(mkThrow(4, false), mkThrow(0, false))];
+    const input: NotationElement[] = [
+      mkSuppressed(mkThrow(4, false), mkThrow(0, false)),
+    ];
     const result = applyExpand(input);
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual(mkAnnotation("left"));
@@ -107,7 +118,9 @@ describe("applyExpand", () => {
   });
 
   it("leaves two-hand beats and multiplex beats unchanged", () => {
-    const input: NotationElement[] = [mkSync(mkThrow(4, false), mkThrow(6, false))];
+    const input: NotationElement[] = [
+      mkSync(mkThrow(4, false), mkThrow(6, false)),
+    ];
     const result = applyExpand(input);
     expect(result).toHaveLength(1);
     expect(result[0].kind).toBe("sync");

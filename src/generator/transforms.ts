@@ -34,13 +34,17 @@ function halveSingle(t: Throw): Throw {
 
 function halveThrow(t: ThrowOrMultiplex): ThrowOrMultiplex {
   if (isMultiplex(t)) {
-    const halved = [...t.throws].map(halveSingle).sort((a, b) => a.value - b.value);
+    const halved = [...t.throws]
+      .map(halveSingle)
+      .sort((a, b) => a.value - b.value);
     return { throws: halved } as MultiplexThrow;
   }
   return halveSingle(t);
 }
 
-export function applyHalve(elements: SuppressedSyncBeat[]): SuppressedSyncBeat[] {
+export function applyHalve(
+  elements: SuppressedSyncBeat[],
+): SuppressedSyncBeat[] {
   return elements.map((b) =>
     mkSuppressed(halveThrow(b.left), halveThrow(b.right)),
   );
@@ -52,7 +56,9 @@ export function applyHalve(elements: SuppressedSyncBeat[]): SuppressedSyncBeat[]
 // Scan left-to-right: if beat B is suppressed and beat B+1 is suppressed-empty,
 // collapse into one SyncBeat and skip B+1.
 
-export function applyCancelPairs(elements: NotationElement[]): NotationElement[] {
+export function applyCancelPairs(
+  elements: NotationElement[],
+): NotationElement[] {
   const result: NotationElement[] = [];
   let i = 0;
   while (i < elements.length) {
@@ -113,7 +119,9 @@ function expandAll(elements: NotationElement[]): NotationElement[] {
   });
 }
 
-function removeRedundantMarkers(elements: NotationElement[]): NotationElement[] {
+function removeRedundantMarkers(
+  elements: NotationElement[],
+): NotationElement[] {
   const result: NotationElement[] = [];
   let expected: "left" | "right" | null = null;
 
