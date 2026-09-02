@@ -36,6 +36,16 @@ export type Pattern = {
   beats: ApiBeat[];
 };
 
+// ── Generator params ─────────────────────────────────────────────────────────
+
+export type GeneratorParams = {
+  rhythm: Rhythm;
+  balls: number;
+  cycles: number;
+  groundLimit: number;
+  activeLimit: number;
+};
+
 // ── Filters ──────────────────────────────────────────────────────────────────
 
 export type FilterState = {

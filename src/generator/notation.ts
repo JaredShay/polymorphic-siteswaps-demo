@@ -37,15 +37,13 @@ export type HandAnnotation = {
 };
 
 export type NotationElement =
-  | SuppressedSyncBeat
-  | SyncBeat
-  | AsyncThrow
-  | EmptySlot
-  | HandAnnotation;
+  SuppressedSyncBeat | SyncBeat | AsyncThrow | EmptySlot | HandAnnotation;
 
 // BeatArray: raw generator output. One [left, right] pair per beat in the period.
 // Index 0 = left hand throw, index 1 = right hand throw.
-export type BeatArray = ReadonlyArray<readonly [ThrowOrMultiplex, ThrowOrMultiplex]>;
+export type BeatArray = ReadonlyArray<
+  readonly [ThrowOrMultiplex, ThrowOrMultiplex]
+>;
 
 // ── Type guards ───────────────────────────────────────────────────────────────
 
