@@ -54,3 +54,13 @@ export type FilterState = {
   state: Set<string>;
   cycles: Set<string>;
 };
+
+// ── Generation session ────────────────────────────────────────────────────────
+
+export type GenerationSession = {
+  id: string;
+  timestamp: number;
+  params: GeneratorParams;
+  filters: FilterState;
+  patterns: Pattern[];
+};
