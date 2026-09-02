@@ -13,9 +13,37 @@ import type {
 const STORAGE_KEY = "poly-history";
 const MAX_SESSIONS = 20;
 
+// Serialize FilterState: Sets → string arrays
+function serializeSession(s: GenerationSession): object {
+  return {
+    ...s,
+    filters: {
+      balls: Array.from(s.filters.balls),
+      family: Array.from(s.filters.family),
+      state: Array.from(s.filters.state),
+      cycles: Array.from(s.filters.cycles),
+    },
+  };
+}
+
+// Deserialize FilterState: string arrays → Sets
+function deserializeSession(raw: Record<string, unknown>): GenerationSession {
+  const f = raw.filters as Record<string, string[]>;
+  return {
+    ...(raw as Omit<GenerationSession, "filters">),
+    filters: {
+      balls: new Set(f.balls ?? []),
+      family: new Set(f.family ?? []),
+      state: new Set(f.state ?? []),
+      cycles: new Set(f.cycles ?? []),
+    },
+  };
+}
+
 function loadSessions(): GenerationSession[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    return (raw as Record<string, unknown>[]).map(deserializeSession);
   } catch {
     return [];
   }
@@ -25,7 +53,7 @@ function saveSessions(sessions: GenerationSession[]): void {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(sessions.slice(0, MAX_SESSIONS)),
+      JSON.stringify(sessions.slice(0, MAX_SESSIONS).map(serializeSession)),
     );
   } catch {
     // localStorage unavailable — silently skip

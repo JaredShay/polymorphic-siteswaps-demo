@@ -9,6 +9,7 @@ import FilterPanel from "./components/FilterPanel/FilterPanel";
 import PresetsGrid from "./components/PresetsGrid/PresetsGrid";
 import PatternQueue from "./components/PatternQueue/PatternQueue";
 import { buildJugglingLabUrl } from "./utils/jugglinglab";
+import { toNotationBeats } from "./utils/beats";
 import "./App.css";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -189,6 +190,10 @@ export default function App() {
           <NotationDisplay
             halved={displayPattern.halved}
             simplified={displayPattern.simplified}
+            notationBeats={toNotationBeats(
+              displayPattern.beats,
+              displayPattern.rhythm,
+            )}
             family={displayFamily(displayPattern)}
             balls={displayPattern.balls}
             state={displayPattern.state}
