@@ -35,6 +35,10 @@ type GeneratorContext = {
   slots: Slot[];
   initialHoles: Holes;
   abortRef: { aborted: boolean };
+  mode: "ordered" | "sampled";
+  foundOne: boolean; // sampled mode: stop traversal after first valid candidate
+  family: string;
+  cycles: number;
 };
 
 // ── Ground state computation ──────────────────────────────────────────────────
@@ -251,10 +255,11 @@ function addResult(
   ctx: GeneratorContext,
   beatArray: BeatArray,
   onPattern: (p: Pattern) => void,
-  family: string,
-  cycles: number,
 ): void {
   if (!hasCross(beatArray)) return;
+
+  // Sampled mode: this walk found a valid candidate — stop traversal after this.
+  ctx.foundOne = true;
 
   const canonical = canonicalRotation(beatArray, ctx.period);
   const key = syncUnparse(canonical);
@@ -283,13 +288,13 @@ function addResult(
 
   const formatted = formatMulti(canonical, PRESETS);
   const pattern: Pattern = {
-    id: `${family}-${ctx.balls}b-${isGround ? "ground" : "active"}-${cycles}c-${formatted.halved.replace(/[^a-z0-9]/gi, "").slice(0, 10)}`,
+    id: `${ctx.family}-${ctx.balls}b-${isGround ? "ground" : "active"}-${ctx.cycles}c-${formatted.halved.replace(/[^a-z0-9]/gi, "").slice(0, 10)}`,
     halved: formatted.halved,
     simplified: formatted.simplified,
     balls: ctx.balls,
     state: isGround ? "ground" : "active",
-    family,
-    cycles,
+    family: ctx.family,
+    cycles: ctx.cycles,
     length: formatted.beats.length,
     rhythm: {
       n: ctx.period,
@@ -320,10 +325,9 @@ function fillSlot(
   tgt: number,
   maxThrow: number,
   onPattern: (p: Pattern) => void,
-  family: string,
-  cycles: number,
 ): void {
   if (ctx.abortRef.aborted) return;
+  if (ctx.mode === "sampled" && ctx.foundOne) return;
 
   // Stop early when all wanted categories are satisfied.
   // limit = 0 means "skip" (already satisfied); limit > 0 means "want N".
@@ -340,8 +344,6 @@ function fillSlot(
         ctx,
         buildBeatArray(ctx.slots, chosen, occupancy, ctx.period),
         onPattern,
-        family,
-        cycles,
       );
     }
     return;
@@ -350,8 +352,8 @@ function fillSlot(
   const [beat, hand] = ctx.slots[k];
   const remainingCt = ctx.slots.length - k - 1;
 
-  // Shuffle when limits are set to achieve non-determinism
-  const shuffled = ctx.groundLimit > 0 || ctx.activeLimit > 0;
+  // Sampled mode: shuffle at every node for independent random walks
+  const shuffled = ctx.mode === "sampled";
   const throwOrder = shuffled
     ? [...ctx.throws].sort(() => Math.random() - 0.5)
     : ctx.throws;
@@ -386,8 +388,6 @@ function fillSlot(
         tgt,
         maxThrow,
         onPattern,
-        family,
-        cycles,
       );
 
       prov[lb][lh].pop();
@@ -425,9 +425,9 @@ export function runGenerator(
   params: GeneratorParams,
   onPattern: (p: Pattern) => void,
   abortRef: { aborted: boolean },
-  family: string,
 ): void {
-  const { rhythm, balls, cycles, groundLimit, activeLimit } = params;
+  const { rhythm, balls, cycles, groundLimit, activeLimit, mode, family } =
+    params;
   const { period, leftBeats, rightBeats } = expandRhythm(rhythm, cycles);
   const throws = defaultThrows(balls, rhythm, cycles);
   const tgt = target(balls, period);
@@ -453,23 +453,62 @@ export function runGenerator(
     slots,
     initialHoles,
     abortRef,
-  };
-
-  const chosen: Array<Throw | Throw[]> = Array(slots.length);
-  const prov = initProvenance(period);
-
-  fillSlot(
-    ctx,
-    0,
-    holes,
-    chosen,
-    0,
-    occupancy,
-    prov,
-    tgt,
-    maxThrow,
-    onPattern,
+    mode,
+    foundOne: false,
     family,
     cycles,
-  );
+  };
+
+  if (mode === "sampled") {
+    // Independent random walk per pattern: restart from scratch after each find.
+    // Stop when limits are met or 100 consecutive walks yield no new pattern.
+    let consecutiveFails = 0;
+    const maxConsecutiveFails = 100;
+    while (!abortRef.aborted && consecutiveFails < maxConsecutiveFails) {
+      const groundDone =
+        groundLimit === 0 || ctx.groundResults.length >= groundLimit;
+      const activeDone =
+        activeLimit === 0 || ctx.activeResults.length >= activeLimit;
+      if (groundDone && activeDone) break;
+      const prevCount = ctx.groundResults.length + ctx.activeResults.length;
+      ctx.foundOne = false;
+      const freshHoles = cloneHoles(ctx.initialHoles);
+      const freshChosen: Array<Throw | Throw[]> = Array(slots.length);
+      const freshProv = initProvenance(period);
+      fillSlot(
+        ctx,
+        0,
+        freshHoles,
+        freshChosen,
+        0,
+        occupancy,
+        freshProv,
+        tgt,
+        maxThrow,
+        onPattern,
+      );
+      const newCount = ctx.groundResults.length + ctx.activeResults.length;
+      if (newCount > prevCount) {
+        consecutiveFails = 0;
+      } else {
+        consecutiveFails++;
+      }
+    }
+  } else {
+    // Ordered: single DFS in sorted throw order — deterministic, reproducible.
+    const chosen: Array<Throw | Throw[]> = Array(slots.length);
+    const prov = initProvenance(period);
+    fillSlot(
+      ctx,
+      0,
+      holes,
+      chosen,
+      0,
+      occupancy,
+      prov,
+      tgt,
+      maxThrow,
+      onPattern,
+    );
+  }
 }

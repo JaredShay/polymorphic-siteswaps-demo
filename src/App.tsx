@@ -40,30 +40,45 @@ function parseInitialFilters(): FilterState {
   };
 }
 
-function filtersToParams(filters: FilterState): GeneratorParams | null {
-  const family = Array.from(filters.family)[0];
-  const preset = RHYTHM_PRESETS.find((r) => r.id === family);
-  if (!preset) return null;
-
-  const balls = parseInt(Array.from(filters.balls)[0] ?? "4");
-  const cycles = parseInt(Array.from(filters.cycles)[0] ?? "1");
-
+function filtersToParamSets(filters: FilterState): GeneratorParams[] {
+  const families = Array.from(filters.family);
+  const ballsArr = Array.from(filters.balls).map(Number);
+  const cyclesArr = Array.from(filters.cycles).map(Number);
   const hasGround = filters.state.has("ground");
   const hasActive = filters.state.has("active");
-  const half = Math.floor(DEFAULT_LIMIT / 2);
 
-  return {
+  type Combo = {
+    family: string;
+    balls: number;
+    cycles: number;
+    preset: (typeof RHYTHM_PRESETS)[number];
+  };
+  const combos: Combo[] = [];
+  for (const family of families) {
+    const preset = RHYTHM_PRESETS.find((r) => r.id === family);
+    if (!preset) continue;
+    for (const balls of ballsArr) {
+      for (const cycles of cyclesArr) {
+        combos.push({ family, balls, cycles, preset });
+      }
+    }
+  }
+
+  if (combos.length === 0) return [];
+
+  const perCombo = Math.max(1, Math.floor(DEFAULT_LIMIT / combos.length));
+  const half = Math.floor(perCombo / 2);
+
+  return combos.map(({ family, balls, cycles, preset }) => ({
     rhythm: preset.rhythm,
     balls,
     cycles,
-    groundLimit: hasGround && hasActive ? half : hasGround ? DEFAULT_LIMIT : 0,
+    groundLimit: hasGround && hasActive ? half : hasGround ? perCombo : 0,
     activeLimit:
-      hasGround && hasActive
-        ? DEFAULT_LIMIT - half
-        : hasActive
-          ? DEFAULT_LIMIT
-          : 0,
-  };
+      hasGround && hasActive ? perCombo - half : hasActive ? perCombo : 0,
+    mode: "sampled" as const,
+    family,
+  }));
 }
 
 function displayFamily(p: Pattern): string {
@@ -97,10 +112,9 @@ export default function App() {
       // The hook starts with empty sessions; we don't auto-generate on URL load
       return;
     }
-    const params = filtersToParams(INIT_FILTERS);
-    if (params) {
-      const family = Array.from(INIT_FILTERS.family)[0] ?? "3over2";
-      generate(params, INIT_FILTERS, family);
+    const paramSets = filtersToParamSets(INIT_FILTERS);
+    if (paramSets.length > 0) {
+      generate(paramSets, INIT_FILTERS);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -112,18 +126,17 @@ export default function App() {
   }, [primaryPattern, filters]);
 
   function handleGenerate() {
-    const params = filtersToParams(filters);
-    if (!params) return;
-    const family = Array.from(filters.family)[0] ?? "3over2";
-    generate(params, filters, family);
+    const paramSets = filtersToParamSets(filters);
+    if (paramSets.length === 0) return;
+    generate(paramSets, filters);
   }
 
   const handleSelectPreset = useCallback(
     (familyId: string) => {
       const next = { ...filters, family: new Set([familyId]) };
       setFilters(next);
-      const params = filtersToParams(next);
-      if (params) generate(params, next, familyId);
+      const paramSets = filtersToParamSets(next);
+      if (paramSets.length > 0) generate(paramSets, next);
     },
     [filters, generate],
   );
@@ -153,13 +166,6 @@ export default function App() {
 
   const activeFamilyId =
     filters.family.size === 1 ? Array.from(filters.family)[0] : null;
-
-  // Determine the rhythm being generated (for skeleton slots)
-  const generatingFamily =
-    status === "generating" ? Array.from(filters.family)[0] : null;
-  const generatingPreset = generatingFamily
-    ? RHYTHM_PRESETS.find((r) => r.id === generatingFamily)
-    : null;
 
   // Show URL pattern above sessions if we loaded from URL with no sessions yet
   const displayPattern =
@@ -205,10 +211,6 @@ export default function App() {
         patterns={currentPatterns}
         primaryIndex={primaryIndex}
         status={status}
-        generatingRhythm={generatingPreset?.rhythm ?? null}
-        limit={DEFAULT_LIMIT}
-        sessionIndex={viewIndex}
-        sessionCount={sessions.length}
         canGoBack={viewIndex < sessions.length - 1}
         canGoForward={viewIndex > 0}
         onSelect={handleSelectPattern}

@@ -8,18 +8,16 @@ import type { Pattern, GeneratorParams } from "../types";
  * thread does not block the UI). Also callable directly in tests with
  * no Worker harness.
  *
- * @param params    - GeneratorParams including rhythm, balls, cycles, limits
+ * @param params    - GeneratorParams including rhythm, balls, cycles, limits, mode, family
  * @param onPattern - Called immediately for each found pattern
  * @param abortRef  - Set abortRef.aborted = true to stop mid-run
- * @param family    - Rhythm family string (e.g. "3over2") used in pattern IDs
  */
 export function generatePatterns(
   params: GeneratorParams,
   onPattern: (pattern: Pattern) => void,
   abortRef: { aborted: boolean },
-  family = "unknown",
 ): void {
-  runGenerator(params, onPattern, abortRef, family);
+  runGenerator(params, onPattern, abortRef);
 }
 
 export type { GeneratorParams } from "../types";

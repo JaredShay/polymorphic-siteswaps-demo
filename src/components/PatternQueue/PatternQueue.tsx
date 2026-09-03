@@ -1,17 +1,12 @@
-import type { Pattern, Rhythm } from "../../types";
+import { useState, useEffect } from "react";
+import type { Pattern } from "../../types";
 import type { GeneratorStatus } from "../../hooks/useGenerator";
-import FingerprintCard from "../FingerprintCard/FingerprintCard";
-import { RING_LEFT, RING_RIGHT } from "../../utils/geometry";
 import "./PatternQueue.css";
 
 interface Props {
   patterns: Pattern[];
   primaryIndex: number;
   status: GeneratorStatus;
-  generatingRhythm: Rhythm | null;
-  limit: number;
-  sessionIndex: number;
-  sessionCount: number;
   canGoBack: boolean;
   canGoForward: boolean;
   onSelect: (index: number) => void;
@@ -19,135 +14,139 @@ interface Props {
   onForward: () => void;
 }
 
-function SkeletonSlot({ rhythm }: { rhythm: Rhythm }) {
-  const { n, leftBeats, rightBeats } = rhythm;
-  const cx = 32,
-    cy = 32,
-    r = 24;
+function colorizeHalved(halved: string): React.ReactNode {
+  const nodes: React.ReactNode[] = [];
+  const re = /\(([^,]+),([^)]+)\)(!?)/g;
+  let i = 0;
+  let match: RegExpExecArray | null;
 
-  function beatPoint(beat: number): [number, number] {
-    const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
-    return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+  while ((match = re.exec(halved)) !== null) {
+    const L = match[1];
+    const R = match[2];
+    const bang = match[3];
+
+    nodes.push(
+      <span key={`${i}op`} className="b-paren">
+        (
+      </span>,
+      L === "0" ? (
+        <span key={`${i}l`} className="b-zero">
+          {L}
+        </span>
+      ) : (
+        <span key={`${i}l`} className="b-l">
+          {L}
+        </span>
+      ),
+      <span key={`${i}s`} className="b-sep">
+        ,
+      </span>,
+      R === "0" ? (
+        <span key={`${i}r`} className="b-zero">
+          {R}
+        </span>
+      ) : (
+        <span key={`${i}r`} className="b-r">
+          {R}
+        </span>
+      ),
+      <span key={`${i}cp`} className="b-paren">
+        )
+      </span>,
+    );
+    if (bang) {
+      nodes.push(
+        <span key={`${i}b`} className="b-rest">
+          !
+        </span>,
+      );
+    }
+    i++;
   }
 
-  return (
-    <div className="pattern-queue__skeleton">
-      <svg viewBox="0 0 64 64" width="64" height="64">
-        <circle
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          stroke="rgba(255,255,255,.08)"
-          strokeWidth={0.3}
-        />
-        {rightBeats.map((b) => {
-          const [x, y] = beatPoint(b);
-          return (
-            <circle
-              key={`r${b}`}
-              cx={x}
-              cy={y}
-              r={1.5}
-              fill={RING_RIGHT}
-              opacity={0.6}
-            />
-          );
-        })}
-        {leftBeats.map((b) => {
-          const [x, y] = beatPoint(b);
-          return (
-            <circle
-              key={`l${b}`}
-              cx={x}
-              cy={y}
-              r={1.5}
-              fill={RING_LEFT}
-              opacity={0.6}
-            />
-          );
-        })}
-      </svg>
-    </div>
-  );
+  return <>{nodes}</>;
 }
 
 export default function PatternQueue({
   patterns,
   primaryIndex,
   status,
-  generatingRhythm,
-  limit,
-  sessionIndex,
-  sessionCount,
   canGoBack,
   canGoForward,
   onSelect,
   onBack,
   onForward,
 }: Props) {
-  const skeletonCount =
-    status === "generating" && sessionIndex === 0
-      ? Math.max(0, limit - patterns.length)
-      : 0;
+  const [expanded, setExpanded] = useState(false);
 
-  const statusText = (() => {
-    const sessionLabel =
-      sessionCount > 0
-        ? `Session ${sessionCount - sessionIndex} of ${sessionCount}`
-        : null;
-    const patternLabel =
-      status === "generating"
-        ? `${patterns.length} / ${limit} found`
-        : patterns.length > 0
-          ? `${patterns.length} patterns`
-          : null;
-    return [sessionLabel, patternLabel].filter(Boolean).join("  ·  ");
-  })();
+  const firstId = patterns[0]?.id;
+  useEffect(() => {
+    setExpanded(false);
+  }, [firstId]);
+
+  const isGenerating = status === "generating";
+  const activePattern = patterns[primaryIndex];
+  const canExpand = patterns.length > 1;
 
   return (
     <div className="pattern-queue">
-      <div className="pattern-queue__row">
-        <button
-          className="pattern-queue__nav"
-          onClick={onBack}
-          disabled={!canGoBack}
-          aria-label="Previous generation"
-        >
-          ←
-        </button>
-
-        {patterns.map((pattern, i) => (
-          <div
-            key={pattern.id}
-            className={`pattern-queue__slot${i === primaryIndex ? " pattern-queue__slot--active" : ""}`}
-            onClick={() => onSelect(i)}
+      {(canGoBack || canGoForward) && (
+        <div className="pattern-queue__session-nav">
+          <button
+            className="pattern-queue__session-btn"
+            onClick={onBack}
+            disabled={!canGoBack}
           >
-            <FingerprintCard
-              uid={pattern.id}
-              rhythm={pattern.rhythm}
-              beats={pattern.beats}
-              compact
-            />
-          </div>
-        ))}
+            ← Earlier
+          </button>
+          <button
+            className="pattern-queue__session-btn"
+            onClick={onForward}
+            disabled={!canGoForward}
+          >
+            Later →
+          </button>
+        </div>
+      )}
 
-        {generatingRhythm &&
-          Array.from({ length: skeletonCount }).map((_, i) => (
-            <SkeletonSlot key={`sk-${i}`} rhythm={generatingRhythm} />
-          ))}
-
+      {expanded ? (
+        <>
+          <ul className="pattern-queue__list">
+            {patterns.map((pattern, i) => (
+              <li
+                key={pattern.id}
+                className={`pattern-queue__item${i === primaryIndex ? " pattern-queue__item--active" : ""}`}
+                onClick={() => i !== primaryIndex && onSelect(i)}
+              >
+                <span className="pattern-queue__notation">
+                  {colorizeHalved(pattern.halved)}
+                </span>
+              </li>
+            ))}
+            {isGenerating && (
+              <li className="pattern-queue__loading">Finding patterns…</li>
+            )}
+          </ul>
+          <button
+            className="pattern-queue__collapse"
+            onClick={() => setExpanded(false)}
+          >
+            Hide ↑
+          </button>
+        </>
+      ) : activePattern ? (
         <button
-          className="pattern-queue__nav"
-          onClick={onForward}
-          disabled={!canGoForward}
-          aria-label="Next generation"
+          className={`pattern-queue__head${canExpand ? " pattern-queue__head--expandable" : ""}`}
+          onClick={() => canExpand && setExpanded(true)}
         >
-          →
+          <span className="pattern-queue__notation">
+            {colorizeHalved(activePattern.halved)}
+          </span>
+          {canExpand && <span className="pattern-queue__chevron">↓</span>}
         </button>
-      </div>
-
-      {statusText && <p className="pattern-queue__status">{statusText}</p>}
+      ) : isGenerating ? (
+        <div className="pattern-queue__loading">Finding patterns…</div>
+      ) : null}
     </div>
   );
 }

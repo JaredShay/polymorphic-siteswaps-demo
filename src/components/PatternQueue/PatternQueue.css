@@ -1,69 +1,167 @@
 .pattern-queue {
   display: flex;
   flex-direction: column;
+  padding: 0.75rem 0 1rem;
+}
+
+/* ── Session nav ──────────────────────────────────────────────────────────── */
+
+.pattern-queue__session-nav {
+  display: flex;
   gap: 0.75rem;
-  padding: 1rem 0;
+  justify-content: flex-end;
+  padding-bottom: 0.5rem;
 }
 
-.pattern-queue__row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-}
-
-.pattern-queue__nav {
+.pattern-queue__session-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.75rem;
   cursor: pointer;
-  flex-shrink: 0;
+  padding: 0.2rem 0.25rem;
+  font-family: inherit;
 }
 
-.pattern-queue__nav:disabled {
-  opacity: 0.3;
+.pattern-queue__session-btn:disabled {
+  opacity: 0.2;
   cursor: default;
 }
 
-.pattern-queue__slot {
-  flex-shrink: 0;
-  border-radius: 8px;
+.pattern-queue__session-btn:not(:disabled):hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Collapsed head (active pattern) ─────────────────────────────────────── */
+
+.pattern-queue__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: var(--hand-l-ghost);
+  border: none;
+  border-left: 2px solid var(--hand-l);
+  border-radius: var(--radius-btn);
+  color: var(--text-hi);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: default;
+}
+
+.pattern-queue__head--expandable {
+  cursor: pointer;
+}
+
+.pattern-queue__head--expandable:hover {
+  background: rgba(34, 211, 238, 0.09);
+}
+
+/* ── Notation (shared by head and list items) ────────────────────────────── */
+
+.pattern-queue__notation {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
-  border: 2px solid transparent;
-  transition: border-color 0.15s;
+  text-overflow: ellipsis;
 }
 
-.pattern-queue__slot--active {
-  border-color: rgba(255, 255, 255, 0.6);
+/* Override b-* structural colors for dark list context */
+.pattern-queue .b-paren,
+.pattern-queue .b-sep {
+  color: rgba(255, 255, 255, 0.18);
 }
 
-.pattern-queue__skeleton {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+.pattern-queue .b-zero {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.pattern-queue__chevron {
+  color: var(--hand-l);
+  font-size: 0.75rem;
   flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+/* ── Expanded list ────────────────────────────────────────────────────────── */
+
+.pattern-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pattern-queue__item {
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-btn);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  color: var(--text-mid);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  transition:
+    background 0.1s,
+    color 0.1s;
+  user-select: none;
+}
+
+.pattern-queue__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.pattern-queue__item--active {
+  background: var(--hand-l-ghost);
+  border-left-color: var(--hand-l);
+  color: var(--text-hi);
+  cursor: default;
+}
+
+.pattern-queue__item--active:hover {
+  background: var(--hand-l-ghost);
+  color: var(--text-hi);
+}
+
+.pattern-queue__loading {
+  padding: 0.55rem 0.75rem;
+  color: var(--text-low);
+  font-size: 0.8rem;
+  font-style: italic;
+  list-style: none;
   animation: queue-pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes queue-pulse {
   0%,
   100% {
-    opacity: 0.3;
+    opacity: 0.4;
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.9;
   }
 }
 
-.pattern-queue__status {
+/* ── Collapse control ─────────────────────────────────────────────────────── */
+
+.pattern-queue__collapse {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: var(--text-low);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
+  cursor: pointer;
+  padding: 0.25rem 0.75rem;
+  font-family: inherit;
+  margin-top: 0.25rem;
+}
+
+.pattern-queue__collapse:hover {
+  color: var(--text-mid);
 }

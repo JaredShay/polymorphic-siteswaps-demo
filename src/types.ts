@@ -44,6 +44,8 @@ export type GeneratorParams = {
   cycles: number;
   groundLimit: number;
   activeLimit: number;
+  mode: "ordered" | "sampled";
+  family: string;
 };
 
 // ── Filters ──────────────────────────────────────────────────────────────────
@@ -60,7 +62,7 @@ export type FilterState = {
 export type GenerationSession = {
   id: string;
   timestamp: number;
-  params: GeneratorParams;
+  params: GeneratorParams[];
   filters: FilterState;
   patterns: Pattern[];
 };

@@ -68,16 +68,3 @@
 .legend-swatch--r {
   background: var(--hand-r);
 }
-
-.fingerprint-card--compact {
-  cursor: pointer;
-}
-
-.fingerprint-card--compact .fingerprint-card__legend {
-  display: none;
-}
-
-.fingerprint-card--compact .fingerprint-card__svg {
-  width: 64px;
-  height: 64px;
-}

@@ -10,11 +10,20 @@ function collect(
   groundLimit: number,
   activeLimit: number,
   cycles = 1,
+  mode: "ordered" | "sampled" = "ordered",
 ): Pattern[] {
   const results: Pattern[] = [];
   const abortRef = { aborted: false };
   generatePatterns(
-    { rhythm: rhythm3over2, balls, cycles, groundLimit, activeLimit },
+    {
+      rhythm: rhythm3over2,
+      balls,
+      cycles,
+      groundLimit,
+      activeLimit,
+      mode,
+      family: "3over2",
+    },
     (p) => results.push(p),
     abortRef,
   );
@@ -59,6 +68,8 @@ describe("generatePatterns — 3/2 rhythm", () => {
         cycles: 1,
         groundLimit: 100,
         activeLimit: 100,
+        mode: "ordered",
+        family: "3over2",
       },
       (p) => {
         results.push(p);
@@ -85,5 +96,28 @@ describe("generatePatterns — 3/2 rhythm", () => {
       expect(p.halved.length).toBeGreaterThan(0);
       expect(typeof p.simplified).toBe("string");
     }
+  });
+
+  it("sampled mode finds patterns and respects limits", () => {
+    const results = collect(4, 3, 3, 1, "sampled");
+    const ground = results.filter((p) => p.state === "ground");
+    const active = results.filter((p) => p.state === "active");
+    expect(ground.length).toBeLessThanOrEqual(3);
+    expect(active.length).toBeLessThanOrEqual(3);
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  it("sampled mode never returns duplicates", () => {
+    const results = collect(4, 10, 10, 1, "sampled");
+    const keys = results.map((p) => `${p.state}:${p.halved}`);
+    expect(new Set(keys).size).toBe(results.length);
+  });
+
+  it("sampled mode produces different orderings across runs (probabilistic)", () => {
+    const run1 = collect(4, 5, 5, 1, "sampled");
+    const run2 = collect(4, 5, 5, 1, "sampled");
+    const seq1 = run1.map((p) => p.halved).join("|");
+    const seq2 = run2.map((p) => p.halved).join("|");
+    expect(seq1).not.toBe(seq2);
   });
 });

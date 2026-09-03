@@ -60,6 +60,8 @@ const defaultParams: GeneratorParams = {
   cycles: 1,
   groundLimit: 5,
   activeLimit: 5,
+  mode: "sampled",
+  family: "3over2",
 };
 
 const defaultFilters: FilterState = {
@@ -85,7 +87,7 @@ describe("useGenerator", () => {
   it("transitions to generating when generate is called", async () => {
     const { result } = renderHook(() => useGenerator());
     act(() => {
-      result.current.generate(defaultParams, defaultFilters, "3over2");
+      result.current.generate([defaultParams], defaultFilters);
     });
     expect(result.current.status).toBe("generating");
   });
@@ -93,7 +95,7 @@ describe("useGenerator", () => {
   it("appends a pattern when the Worker emits one", async () => {
     const { result } = renderHook(() => useGenerator());
     await act(async () => {
-      result.current.generate(defaultParams, defaultFilters, "3over2");
+      result.current.generate([defaultParams], defaultFilters);
       await new Promise((r) => setTimeout(r, 10));
     });
     expect(result.current.sessions[0]?.patterns.length).toBeGreaterThan(0);
@@ -102,7 +104,7 @@ describe("useGenerator", () => {
   it("transitions to done when Worker emits done", async () => {
     const { result } = renderHook(() => useGenerator());
     await act(async () => {
-      result.current.generate(defaultParams, defaultFilters, "3over2");
+      result.current.generate([defaultParams], defaultFilters);
       await new Promise((r) => setTimeout(r, 10));
     });
     expect(result.current.status).toBe("done");
@@ -111,7 +113,7 @@ describe("useGenerator", () => {
   it("saves session to localStorage on done", async () => {
     const { result } = renderHook(() => useGenerator());
     await act(async () => {
-      result.current.generate(defaultParams, defaultFilters, "3over2");
+      result.current.generate([defaultParams], defaultFilters);
       await new Promise((r) => setTimeout(r, 10));
     });
     const stored = JSON.parse(localStorage.getItem("poly-history") ?? "[]");

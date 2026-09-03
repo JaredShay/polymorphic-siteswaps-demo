@@ -19,15 +19,9 @@ interface Props {
   uid: string;
   rhythm: Rhythm;
   beats: ApiBeat[];
-  compact?: boolean;
 }
 
-export default function FingerprintCard({
-  uid,
-  rhythm,
-  beats,
-  compact = false,
-}: Props) {
+export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const { n, leftBeats, rightBeats } = rhythm;
   const r = 60,
     cx = 80,
@@ -124,9 +118,7 @@ export default function FingerprintCard({
   }
 
   return (
-    <div
-      className={`fingerprint-card${compact ? " fingerprint-card--compact" : ""}`}
-    >
+    <div className="fingerprint-card">
       <svg viewBox="0 0 160 160" className="fingerprint-card__svg">
         <defs>
           <filter id={filterId} x="-100%" y="-100%" width="300%" height="300%">

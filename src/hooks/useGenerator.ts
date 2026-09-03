@@ -67,11 +67,7 @@ export type UseGeneratorReturn = {
   viewIndex: number;
   primaryIndex: number;
   status: GeneratorStatus;
-  generate: (
-    params: GeneratorParams,
-    filters: FilterState,
-    family: string,
-  ) => void;
+  generate: (paramSets: GeneratorParams[], filters: FilterState) => void;
   setViewIndex: (index: number) => void;
   setPrimaryIndex: (index: number) => void;
 };
@@ -134,7 +130,7 @@ export function useGenerator(): UseGeneratorReturn {
   }, []);
 
   const generate = useCallback(
-    (params: GeneratorParams, filters: FilterState, family: string) => {
+    (paramSets: GeneratorParams[], filters: FilterState) => {
       // Cancel any in-progress run
       workerRef.current?.postMessage({
         type: "cancel",
@@ -143,7 +139,7 @@ export function useGenerator(): UseGeneratorReturn {
       const session: GenerationSession = {
         id: String(Date.now()),
         timestamp: Date.now(),
-        params,
+        params: paramSets,
         filters,
         patterns: [],
       };
@@ -156,8 +152,7 @@ export function useGenerator(): UseGeneratorReturn {
 
       workerRef.current?.postMessage({
         type: "start",
-        params,
-        family,
+        paramSets,
       } satisfies WorkerInMessage);
     },
     [],

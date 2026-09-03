@@ -4,8 +4,7 @@ import type { Pattern, GeneratorParams } from "../types";
 // ── Message protocol ──────────────────────────────────────────────────────────
 
 export type WorkerInMessage =
-  | { type: "start"; params: GeneratorParams; family: string }
-  | { type: "cancel" };
+  { type: "start"; paramSets: GeneratorParams[] } | { type: "cancel" };
 
 export type WorkerOutMessage =
   | { type: "pattern"; pattern: Pattern }
@@ -32,18 +31,20 @@ self.onmessage = (event: MessageEvent<WorkerInMessage>) => {
     total = 0;
 
     try {
-      generatePatterns(
-        msg.params,
-        (pattern: Pattern) => {
-          total++;
-          self.postMessage({
-            type: "pattern",
-            pattern,
-          } satisfies WorkerOutMessage);
-        },
-        abortRef,
-        msg.family,
-      );
+      for (const params of msg.paramSets) {
+        if (abortRef.aborted) break;
+        generatePatterns(
+          params,
+          (pattern: Pattern) => {
+            total++;
+            self.postMessage({
+              type: "pattern",
+              pattern,
+            } satisfies WorkerOutMessage);
+          },
+          abortRef,
+        );
+      }
       self.postMessage({ type: "done", total } satisfies WorkerOutMessage);
     } catch (err) {
       self.postMessage({
