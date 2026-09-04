@@ -48,3 +48,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.rhythm-icon__ratio {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  fill: var(--text-hi);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
