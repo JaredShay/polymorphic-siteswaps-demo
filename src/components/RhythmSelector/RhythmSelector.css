@@ -1,0 +1,57 @@
+.rhythm-selector__icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.rhythm-selector__icon-btn {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-chip);
+  padding: var(--s2);
+  cursor: pointer;
+  line-height: 0;
+  transition:
+    border-color 0.15s,
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.rhythm-selector__icon-btn:hover:not(:disabled) {
+  border-color: var(--hairline-strong);
+}
+
+.rhythm-selector__icon-btn--active {
+  border-color: var(--accent);
+  background: rgba(255, 178, 92, 0.08);
+}
+
+.rhythm-selector__icon-btn--muted {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.rhythm-selector__icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rhythm-selector__custom-ring {
+  stroke: var(--text-mid);
+  stroke-width: 1.5;
+}
+
+.rhythm-selector__custom-plus {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  fill: var(--text-mid);
+  font-weight: 300;
+}
+
+.rhythm-selector__icon-btn--active .rhythm-selector__custom-ring {
+  stroke: var(--accent);
+}
+
+.rhythm-selector__icon-btn--active .rhythm-selector__custom-plus {
+  fill: var(--accent);
+}
