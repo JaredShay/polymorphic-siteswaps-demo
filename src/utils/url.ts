@@ -120,7 +120,6 @@ export function buildUrl(pattern: Pattern, filters: FilterState): string {
     ps: pattern.state,
     pc: String(pattern.cycles),
     fb: Array.from(filters.balls).sort().join(","),
-    ff: Array.from(filters.family).sort().join(","),
     fs: Array.from(filters.state).sort().join(","),
     fc: Array.from(filters.cycles).sort().join(","),
   });

@@ -19,7 +19,6 @@ function serializeSession(s: GenerationSession): object {
     ...s,
     filters: {
       balls: Array.from(s.filters.balls),
-      family: Array.from(s.filters.family),
       state: Array.from(s.filters.state),
       cycles: Array.from(s.filters.cycles),
     },
@@ -33,7 +32,6 @@ function deserializeSession(raw: Record<string, unknown>): GenerationSession {
     ...(raw as Omit<GenerationSession, "filters">),
     filters: {
       balls: new Set(f.balls ?? []),
-      family: new Set(f.family ?? []),
       state: new Set(f.state ?? []),
       cycles: new Set(f.cycles ?? []),
     },

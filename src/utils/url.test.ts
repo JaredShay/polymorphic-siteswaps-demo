@@ -68,7 +68,6 @@ describe("buildUrl / patternFromUrl", () => {
   it("round-trips a pattern through the URL", () => {
     const url = buildUrl(mockPattern, {
       balls: new Set(["4"]),
-      family: new Set(["3over2"]),
       state: new Set(["ground", "active"]),
       cycles: new Set(["1"]),
     });

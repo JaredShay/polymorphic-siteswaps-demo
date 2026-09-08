@@ -52,7 +52,6 @@ export type GeneratorParams = {
 
 export type FilterState = {
   balls: Set<string>;
-  family: Set<string>;
   state: Set<string>;
   cycles: Set<string>;
 };

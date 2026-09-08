@@ -66,7 +66,6 @@ const defaultParams: GeneratorParams = {
 
 const defaultFilters: FilterState = {
   balls: new Set(["4"]),
-  family: new Set(["3over2"]),
   state: new Set(["ground", "active"]),
   cycles: new Set(["1"]),
 };

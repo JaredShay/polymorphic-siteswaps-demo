@@ -7,7 +7,7 @@ interface Props {
 }
 
 function toggle(set: Set<string>, value: string): Set<string> {
-  if (set.has(value) && set.size === 1) return set; // keep at least one
+  if (set.has(value) && set.size === 1) return set;
   const next = new Set(set);
   if (next.has(value)) next.delete(value);
   else next.add(value);
@@ -15,15 +15,6 @@ function toggle(set: Set<string>, value: string): Set<string> {
 }
 
 const BALLS = ["4", "5"];
-const RHYTHMS = [
-  { value: "3over2", label: "3:2" },
-  { value: "4over3", label: "4:3" },
-  { value: "5over2", label: "5:2" },
-  { value: "5over3", label: "5:3" },
-  { value: "5over4", label: "5:4" },
-  { value: "332", label: "332" },
-  { value: "clave", label: "Clave" },
-];
 const STATES = [
   { value: "active", label: "Excited" },
   { value: "ground", label: "Ground" },
@@ -51,22 +42,6 @@ export default function FilterPanel({ filters, onChange }: Props) {
               onClick={() => handleToggle("balls", v)}
             >
               {v}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="filter-panel__row">
-        <span className="filter-panel__label">Rhythm</span>
-        <div className="filter-panel__chips">
-          {RHYTHMS.map(({ value, label }) => (
-            <button
-              key={value}
-              className="chip"
-              aria-pressed={filters.family.has(value) ? "true" : "false"}
-              onClick={() => handleToggle("family", value)}
-            >
-              {label}
             </button>
           ))}
         </div>
