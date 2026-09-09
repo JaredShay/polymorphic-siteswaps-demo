@@ -81,10 +81,12 @@ export function chordalAngles(beats: number[], n: number): number[] | null {
 // Result of chordal layout for one hand's beats.
 // effectiveBeats[i] is the original beat (mod n) for vertex i.
 // beatFractions[i] is the timing fraction in [0,1) for pointOnPolygonTimed.
+// intervalLabels[i] is the interval count from vertex i to vertex (i+1)%m.
 export type ChordedHand = {
   angles: number[];
   effectiveBeats: number[];
   beatFractions: number[];
+  intervalLabels: string[];
 };
 
 // Try single-cycle chordal; fall back to 2-cycle for m<3 or unsolvable m=3.
@@ -95,10 +97,14 @@ export function chordalHand(beats: number[], n: number): ChordedHand | null {
   // Single-cycle
   const directAngles = chordalAngles(beats, n);
   if (directAngles !== null) {
+    const intervals = beats.map((b, i) =>
+      i < beats.length - 1 ? beats[i + 1] - b : n - b + beats[0],
+    );
     return {
       angles: directAngles,
       effectiveBeats: [...beats],
       beatFractions: beats.map((b) => b / n),
+      intervalLabels: intervals.map(String),
     };
   }
 
@@ -122,6 +128,7 @@ export function chordalHand(beats: number[], n: number): ChordedHand | null {
     angles,
     effectiveBeats: doubled.map((b) => b % n),
     beatFractions: doubled.map((b) => b / doubledN),
+    intervalLabels: intervals.map(String),
   };
 }
 
@@ -158,9 +165,18 @@ export function chordParams(
   r: number,
   cx: number,
   cy: number,
+  beatAng?: (b: number) => number,
 ) {
-  const [x1, y1] = beatPoint(beat, n, r, cx, cy);
-  const [x2, y2] = beatPoint((beat + value) % n, n, r, cx, cy);
+  const ang1 = beatAng
+    ? beatAng(beat)
+    : (-Math.PI / 2 + (beat / n) * 2 * Math.PI);
+  const ang2 = beatAng
+    ? beatAng((beat + value) % n)
+    : (-Math.PI / 2 + (((beat + value) % n) / n) * 2 * Math.PI);
+  const x1 = cx + r * Math.cos(ang1);
+  const y1 = cy + r * Math.sin(ang1);
+  const x2 = cx + r * Math.cos(ang2);
+  const y2 = cy + r * Math.sin(ang2);
   const bow = 0.16 + value / 40;
   const mx = cx + ((x1 + x2) / 2 - cx) * bow;
   const my = cy + ((y1 + y2) / 2 - cy) * bow;
