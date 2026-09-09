@@ -42,6 +42,73 @@ export function verticesFromBeats(
   return beats.map((beat) => beatPoint(beat, n, r, cx, cy));
 }
 
+// Compute vertex angles that make chord_i ∝ interval_i, so constant-speed
+// traversal spends time proportional to each interval.
+//
+// Returns null when: fewer than 3 beats, evenly spaced (current approach is
+// already exact), or the max interval dominates so much the equation has no
+// solution.
+export function chordalAngles(beats: number[], n: number): number[] | null {
+  const m = beats.length;
+  if (m < 3) return null;
+
+  const intervals = beats.map((b, i) =>
+    i < m - 1 ? beats[i + 1] - b : n - b + beats[0],
+  );
+
+  // Evenly spaced: current approach already exact
+  if (intervals.every((d) => d === intervals[0])) return null;
+
+  // Solve ∑ arcsin(c·dᵢ) = π — check it's solvable first
+  const dMax = Math.max(...intervals);
+  const fAtCMax = intervals.reduce((s, d) => s + Math.asin(d / dMax), 0);
+  if (fAtCMax < Math.PI) return null;
+
+  let lo = 0,
+    hi = 1 / dMax;
+  for (let i = 0; i < 64; i++) {
+    const mid = (lo + hi) / 2;
+    intervals.reduce((s, d) => s + Math.asin(mid * d), 0) < Math.PI
+      ? (lo = mid)
+      : (hi = mid);
+  }
+  const c = (lo + hi) / 2;
+
+  // Place first vertex at its natural clock position; space the rest chorally
+  const startAngle = -Math.PI / 2 + (beats[0] / n) * 2 * Math.PI;
+  const angles: number[] = [startAngle];
+  for (let i = 0; i < m - 1; i++) {
+    angles.push(angles[i] + 2 * Math.asin(c * intervals[i]));
+  }
+  return angles;
+}
+
+export function verticesFromAngles(
+  angles: number[],
+  r: number,
+  cx: number,
+  cy: number,
+): [number, number][] {
+  return angles.map((ang) => [cx + r * Math.cos(ang), cy + r * Math.sin(ang)]);
+}
+
+export function ringPathFromAngles(
+  angles: number[],
+  r: number,
+  cx: number,
+  cy: number,
+): string {
+  return (
+    angles
+      .map((ang, j) => {
+        const x = cx + r * Math.cos(ang);
+        const y = cy + r * Math.sin(ang);
+        return `${j === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ") + " Z"
+  );
+}
+
 export function chordParams(
   beat: number,
   value: number,

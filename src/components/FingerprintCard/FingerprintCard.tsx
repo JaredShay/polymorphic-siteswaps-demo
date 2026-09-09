@@ -4,7 +4,10 @@ import { toAnimatorThrows } from "../../utils/beats";
 import {
   beatPoint,
   ringPathFromBeats,
+  ringPathFromAngles,
   verticesFromBeats,
+  verticesFromAngles,
+  chordalAngles,
   chordParams,
   circularArcPath,
   SELF_LOOP_R,
@@ -36,10 +39,22 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const [arcTs, setArcTs] = useState<(number | null)[]>([]);
 
   const animatorThrows = useMemo(() => toAnimatorThrows(beats), [beats]);
+  const rightChordAngles = useMemo(
+    () => chordalAngles(rightBeats, n),
+    [rightBeats, n],
+  );
+  const leftChordAngles = useMemo(
+    () => chordalAngles(leftBeats, n),
+    [leftBeats, n],
+  );
 
   useEffect(() => {
-    const tealVerts = verticesFromBeats(rightBeats, n, r, cx, cy);
-    const pinkVerts = verticesFromBeats(leftBeats, n, r, cx, cy);
+    const tealVerts = rightChordAngles
+      ? verticesFromAngles(rightChordAngles, r, cx, cy)
+      : verticesFromBeats(rightBeats, n, r, cx, cy);
+    const pinkVerts = leftChordAngles
+      ? verticesFromAngles(leftChordAngles, r, cx, cy)
+      : verticesFromBeats(leftBeats, n, r, cx, cy);
     const rightBeatFractions = rightBeats.map((b) => b / n);
     const leftBeatFractions = leftBeats.map((b) => b / n);
     const throwTiming = animatorThrows.map((thr) => ({
@@ -106,7 +121,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [n, leftBeats, rightBeats, animatorThrows]);
+  }, [n, leftBeats, rightBeats, animatorThrows, rightChordAngles, leftChordAngles]);
 
   function handDesc(beats: number[]): string {
     if (beats.length === 0) return "silent";
@@ -140,14 +155,18 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         <path
-          d={ringPathFromBeats(rightBeats, n, r, cx, cy)}
+          d={rightChordAngles
+            ? ringPathFromAngles(rightChordAngles, r, cx, cy)
+            : ringPathFromBeats(rightBeats, n, r, cx, cy)}
           fill="none"
           className="fingerprint-ring-right"
           strokeWidth={0.5}
           opacity={0.6}
         />
         <path
-          d={ringPathFromBeats(leftBeats, n, r, cx, cy)}
+          d={leftChordAngles
+            ? ringPathFromAngles(leftChordAngles, r, cx, cy)
+            : ringPathFromBeats(leftBeats, n, r, cx, cy)}
           fill="none"
           className="fingerprint-ring-left"
           strokeWidth={0.5}
