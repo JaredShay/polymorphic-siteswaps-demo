@@ -38,15 +38,24 @@ export default function RhythmIcon({ rhythm, name, label, size, decorative }: Pr
           className="rhythm-icon__poly-left"
         />
         {label && (
-          <text
-            x={cx}
-            y={cy}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="rhythm-icon__ratio"
-          >
-            {label}
-          </text>
+          <>
+            <circle
+              cx={cx}
+              cy={cy}
+              r={22}
+              fill="var(--bg)"
+              opacity={0.72}
+            />
+            <text
+              x={cx}
+              y={cy}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="rhythm-icon__ratio"
+            >
+              {label}
+            </text>
+          </>
         )}
       </svg>
       {!label && !decorative && <span className="rhythm-icon__name">{name}</span>}

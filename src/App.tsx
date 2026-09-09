@@ -133,14 +133,9 @@ export default function App() {
     generate(paramSets, filters);
   }
 
-  const handleRhythmChange = useCallback(
-    (selection: RhythmSelection) => {
-      setRhythmSelection(selection);
-      const paramSets = filtersToParamSets(selection, filters);
-      if (paramSets.length > 0) generate(paramSets, filters);
-    },
-    [filters, generate],
-  );
+  const handleRhythmChange = useCallback((selection: RhythmSelection) => {
+    setRhythmSelection(selection);
+  }, []);
 
   function handleSelectPattern(index: number) {
     setPrimaryIndex(index);

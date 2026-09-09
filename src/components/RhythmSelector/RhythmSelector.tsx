@@ -180,69 +180,95 @@ export default function RhythmSelector({ onChange }: Props) {
         </button>
       </div>
 
-      {customActive && (
-        <div className="rhythm-selector__custom-panel">
-          {(["left", "right"] as const).map((hand) => {
-            const length =
-              hand === "left"
-                ? customConfig.leftLength
-                : customConfig.rightLength;
-            const beats =
-              hand === "left"
-                ? customConfig.leftBeats
-                : customConfig.rightBeats;
-            const label = hand === "left" ? "Left" : "Right";
+      {customActive && (() => {
+        const n = lcm(customConfig.leftLength, customConfig.rightLength);
+        const maxLen = Math.max(customConfig.leftLength, customConfig.rightLength);
+        const SLOT = 22;
+        const GAP = 4;
+        const containerWidth = maxLen * SLOT + (maxLen - 1) * GAP;
+        const maxPeriodSpan = n - n / maxLen;
+        const pxPerUnit = maxPeriodSpan > 0 ? (containerWidth - SLOT) / maxPeriodSpan : 0;
 
-            return (
-              <div key={hand} className="rhythm-selector__hand-row">
-                <span className="rhythm-selector__hand-label">{label}</span>
+        const slotLeft = (i: number, handLen: number) =>
+          Math.round(i * (n / handLen) * pxPerUnit);
 
-                <div className="rhythm-selector__stepper">
-                  <button
-                    className="rhythm-selector__stepper-btn"
-                    onClick={() => adjustLength(hand, -1)}
-                    disabled={length <= 2}
-                    aria-label={`Decrease ${hand} length`}
-                  >
-                    −
-                  </button>
-                  <span
-                    className="rhythm-selector__stepper-value"
-                    aria-label={`${label} hand length`}
-                  >
-                    {length}
-                  </span>
-                  <button
-                    className="rhythm-selector__stepper-btn"
-                    onClick={() => adjustLength(hand, 1)}
-                    disabled={length >= 8}
-                    aria-label={`Increase ${hand} length`}
-                  >
-                    +
-                  </button>
-                </div>
+        return (
+          <div className="rhythm-selector__custom-panel">
+            {(["left", "right"] as const).map((hand) => {
+              const length =
+                hand === "left"
+                  ? customConfig.leftLength
+                  : customConfig.rightLength;
+              const beats =
+                hand === "left"
+                  ? customConfig.leftBeats
+                  : customConfig.rightBeats;
+              const label = hand === "left" ? "Left" : "Right";
+              const handColor = hand === "left" ? "var(--hand-l)" : "var(--hand-r)";
+              const handColorMute = hand === "left" ? "var(--hand-l-mute)" : "var(--hand-r-mute)";
 
-                <div className="rhythm-selector__beat-grid">
-                  {Array.from({ length }, (_, i) => (
+              return (
+                <div
+                  key={hand}
+                  className="rhythm-selector__hand-row"
+                  style={{
+                    "--beat-color": handColor,
+                    "--beat-color-mute": handColorMute,
+                  } as React.CSSProperties}
+                >
+                  <span className="rhythm-selector__hand-label">{label}</span>
+
+                  <div className="rhythm-selector__stepper">
                     <button
-                      key={i}
-                      className={[
-                        "rhythm-selector__beat-slot",
-                        beats.has(i) ? "rhythm-selector__beat-slot--active" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onClick={() => toggleBeat(hand, i)}
-                      aria-pressed={beats.has(i)}
-                      aria-label={`${label} beat ${i}`}
-                    />
-                  ))}
+                      className="rhythm-selector__stepper-btn"
+                      onClick={() => adjustLength(hand, -1)}
+                      disabled={length <= 2}
+                      aria-label={`Decrease ${hand} length`}
+                    >
+                      −
+                    </button>
+                    <span
+                      className="rhythm-selector__stepper-value"
+                      aria-label={`${label} hand length`}
+                    >
+                      {length}
+                    </span>
+                    <button
+                      className="rhythm-selector__stepper-btn"
+                      onClick={() => adjustLength(hand, 1)}
+                      disabled={length >= 8}
+                      aria-label={`Increase ${hand} length`}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div
+                    className="rhythm-selector__beat-grid"
+                    style={{ width: containerWidth, height: SLOT }}
+                  >
+                    {Array.from({ length }, (_, i) => (
+                      <button
+                        key={i}
+                        className={[
+                          "rhythm-selector__beat-slot",
+                          beats.has(i) ? "rhythm-selector__beat-slot--active" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        style={{ left: slotLeft(i, length), width: SLOT, height: SLOT }}
+                        onClick={() => toggleBeat(hand, i)}
+                        aria-pressed={beats.has(i)}
+                        aria-label={`${label} beat ${i}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
