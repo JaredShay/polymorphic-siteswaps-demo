@@ -42,28 +42,12 @@ export function verticesFromBeats(
   return beats.map((beat) => beatPoint(beat, n, r, cx, cy));
 }
 
-// Compute vertex angles that make chord_i ∝ interval_i, so constant-speed
-// traversal spends time proportional to each interval.
-//
-// Returns null when: fewer than 3 beats, evenly spaced (current approach is
-// already exact), or the max interval dominates so much the equation has no
-// solution.
-export function chordalAngles(beats: number[], n: number): number[] | null {
-  const m = beats.length;
-  if (m < 3) return null;
-
-  const intervals = beats.map((b, i) =>
-    i < m - 1 ? beats[i + 1] - b : n - b + beats[0],
-  );
-
-  // Evenly spaced: current approach already exact
-  if (intervals.every((d) => d === intervals[0])) return null;
-
-  // Solve ∑ arcsin(c·dᵢ) = π — check it's solvable first
+// Solve ∑ arcsin(c·dᵢ) = π for c. Returns null if no solution exists
+// (happens when max interval is so dominant the arcsins can't sum to π).
+function solveChordalC(intervals: number[]): number | null {
   const dMax = Math.max(...intervals);
   const fAtCMax = intervals.reduce((s, d) => s + Math.asin(d / dMax), 0);
   if (fAtCMax < Math.PI) return null;
-
   let lo = 0,
     hi = 1 / dMax;
   for (let i = 0; i < 64; i++) {
@@ -72,15 +56,73 @@ export function chordalAngles(beats: number[], n: number): number[] | null {
       ? (lo = mid)
       : (hi = mid);
   }
-  const c = (lo + hi) / 2;
+  return (lo + hi) / 2;
+}
 
-  // Place first vertex at its natural clock position; space the rest chorally
+// Compute vertex angles where chord_i ∝ interval_i (single-cycle, m≥3).
+// Returns null when fewer than 3 beats, evenly spaced, or unsolvable.
+export function chordalAngles(beats: number[], n: number): number[] | null {
+  const m = beats.length;
+  if (m < 3) return null;
+  const intervals = beats.map((b, i) =>
+    i < m - 1 ? beats[i + 1] - b : n - b + beats[0],
+  );
+  if (intervals.every((d) => d === intervals[0])) return null;
+  const c = solveChordalC(intervals);
+  if (c === null) return null;
   const startAngle = -Math.PI / 2 + (beats[0] / n) * 2 * Math.PI;
   const angles: number[] = [startAngle];
   for (let i = 0; i < m - 1; i++) {
     angles.push(angles[i] + 2 * Math.asin(c * intervals[i]));
   }
   return angles;
+}
+
+// Result of chordal layout for one hand's beats.
+// effectiveBeats[i] is the original beat (mod n) for vertex i.
+// beatFractions[i] is the timing fraction in [0,1) for pointOnPolygonTimed.
+export type ChordedHand = {
+  angles: number[];
+  effectiveBeats: number[];
+  beatFractions: number[];
+};
+
+// Try single-cycle chordal; fall back to 2-cycle for m<3 or unsolvable m=3.
+// Returns null only when the rhythm is evenly spaced (no remapping needed).
+export function chordalHand(beats: number[], n: number): ChordedHand | null {
+  if (beats.length < 2) return null;
+
+  // Single-cycle
+  const directAngles = chordalAngles(beats, n);
+  if (directAngles !== null) {
+    return {
+      angles: directAngles,
+      effectiveBeats: [...beats],
+      beatFractions: beats.map((b) => b / n),
+    };
+  }
+
+  // 2-cycle: double the beat sequence and the period
+  const doubled = [...beats, ...beats.map((b) => b + n)];
+  const doubledN = n * 2;
+  const intervals = doubled.map((b, i) =>
+    i < doubled.length - 1 ? doubled[i + 1] - b : doubledN - b + doubled[0],
+  );
+  if (intervals.every((d) => d === intervals[0])) return null; // evenly spaced
+  const c = solveChordalC(intervals);
+  if (c === null) return null;
+
+  // Anchor first vertex at beats[0]'s natural clock position on the ORIGINAL ring
+  const startAngle = -Math.PI / 2 + (beats[0] / n) * 2 * Math.PI;
+  const angles: number[] = [startAngle];
+  for (let i = 0; i < doubled.length - 1; i++) {
+    angles.push(angles[i] + 2 * Math.asin(c * intervals[i]));
+  }
+  return {
+    angles,
+    effectiveBeats: doubled.map((b) => b % n),
+    beatFractions: doubled.map((b) => b / doubledN),
+  };
 }
 
 export function verticesFromAngles(

@@ -7,7 +7,7 @@ import {
   ringPathFromAngles,
   verticesFromBeats,
   verticesFromAngles,
-  chordalAngles,
+  chordalHand,
   chordParams,
   circularArcPath,
   SELF_LOOP_R,
@@ -34,29 +34,40 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const [tealPos, setTealPos] = useState<[number, number]>([cx, cy - r]);
   const [pinkPos, setPinkPos] = useState<[number, number]>([cx, cy - r]);
   const [nodePulses, setNodePulses] = useState<
-    Record<number, { key: number; color: string }>
+    Record<number, { key: number; color: string; x: number; y: number }>
   >({});
   const [arcTs, setArcTs] = useState<(number | null)[]>([]);
 
   const animatorThrows = useMemo(() => toAnimatorThrows(beats), [beats]);
-  const rightChordAngles = useMemo(
-    () => chordalAngles(rightBeats, n),
-    [rightBeats, n],
-  );
-  const leftChordAngles = useMemo(
-    () => chordalAngles(leftBeats, n),
-    [leftBeats, n],
-  );
+  const chordedRight = useMemo(() => chordalHand(rightBeats, n), [rightBeats, n]);
+  const chordedLeft = useMemo(() => chordalHand(leftBeats, n), [leftBeats, n]);
+
+  // Map from original beat index → chordal angle, for rendering dots/labels
+  const beatAngleMap = useMemo(() => {
+    const map = new Map<number, number>();
+    // Only store first occurrence so label positions are stable
+    chordedRight?.effectiveBeats.forEach((b, i) => {
+      if (!map.has(b)) map.set(b, chordedRight.angles[i]);
+    });
+    chordedLeft?.effectiveBeats.forEach((b, i) => {
+      if (!map.has(b)) map.set(b, chordedLeft.angles[i]);
+    });
+    return map;
+  }, [chordedRight, chordedLeft]);
 
   useEffect(() => {
-    const tealVerts = rightChordAngles
-      ? verticesFromAngles(rightChordAngles, r, cx, cy)
+    const tealVerts = chordedRight
+      ? verticesFromAngles(chordedRight.angles, r, cx, cy)
       : verticesFromBeats(rightBeats, n, r, cx, cy);
-    const pinkVerts = leftChordAngles
-      ? verticesFromAngles(leftChordAngles, r, cx, cy)
+    const pinkVerts = chordedLeft
+      ? verticesFromAngles(chordedLeft.angles, r, cx, cy)
       : verticesFromBeats(leftBeats, n, r, cx, cy);
-    const rightBeatFractions = rightBeats.map((b) => b / n);
-    const leftBeatFractions = leftBeats.map((b) => b / n);
+    const rightBeatFractions = chordedRight
+      ? chordedRight.beatFractions
+      : rightBeats.map((b) => b / n);
+    const leftBeatFractions = chordedLeft
+      ? chordedLeft.beatFractions
+      : leftBeats.map((b) => b / n);
     const throwTiming = animatorThrows.map((thr) => ({
       throwStart: thr.beat / n,
       throwDuration: thr.value / n,
@@ -89,18 +100,37 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         setNodePulses((prev) => {
           const next = { ...prev };
           if (tealHit) {
-            const beat = rightBeats[tealEdge];
-            next[beat] = { key: (prev[beat]?.key ?? 0) + 1, color: RING_RIGHT };
+            const beat = chordedRight
+              ? chordedRight.effectiveBeats[tealEdge]
+              : rightBeats[tealEdge];
+            const [px, py] = tealVerts[tealEdge];
+            next[`r${tealEdge}`] = {
+              key: (prev[`r${tealEdge}`]?.key ?? 0) + 1,
+              color: RING_RIGHT,
+              x: px,
+              y: py,
+            };
+            void beat; // beat identity used below for same-as-teal check
           }
           if (pinkHit) {
-            const beat = leftBeats[pinkEdge];
-            const sameAsTeal = tealHit && rightBeats[tealEdge] === beat;
+            const pinkBeat = chordedLeft
+              ? chordedLeft.effectiveBeats[pinkEdge]
+              : leftBeats[pinkEdge];
+            const tealBeat = chordedRight
+              ? chordedRight.effectiveBeats[tealEdge]
+              : rightBeats[tealEdge];
+            const sameAsTeal = tealHit && tealBeat === pinkBeat;
+            const [px, py] = pinkVerts[pinkEdge];
+            const key = `p${pinkEdge}`;
             if (sameAsTeal) {
-              next[beat] = { ...next[beat], color: "#fff" };
+              // Collision: overwrite teal pulse at same position with white
+              next[`r${tealEdge}`] = { ...next[`r${tealEdge}`], color: "#fff" };
             } else {
-              next[beat] = {
-                key: (prev[beat]?.key ?? 0) + 1,
+              next[key] = {
+                key: (prev[key]?.key ?? 0) + 1,
                 color: RING_LEFT,
+                x: px,
+                y: py,
               };
             }
           }
@@ -121,7 +151,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [n, leftBeats, rightBeats, animatorThrows, rightChordAngles, leftChordAngles]);
+  }, [n, leftBeats, rightBeats, animatorThrows, chordedRight, chordedLeft]);
 
   function handDesc(beats: number[]): string {
     if (beats.length === 0) return "silent";
@@ -155,8 +185,8 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         <path
-          d={rightChordAngles
-            ? ringPathFromAngles(rightChordAngles, r, cx, cy)
+          d={chordedRight
+            ? ringPathFromAngles(chordedRight.angles, r, cx, cy)
             : ringPathFromBeats(rightBeats, n, r, cx, cy)}
           fill="none"
           className="fingerprint-ring-right"
@@ -164,8 +194,8 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           opacity={0.6}
         />
         <path
-          d={leftChordAngles
-            ? ringPathFromAngles(leftChordAngles, r, cx, cy)
+          d={chordedLeft
+            ? ringPathFromAngles(chordedLeft.angles, r, cx, cy)
             : ringPathFromBeats(leftBeats, n, r, cx, cy)}
           fill="none"
           className="fingerprint-ring-left"
@@ -174,8 +204,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         {Array.from({ length: n }, (_, beat) => {
-          const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
-          const [x, y] = beatPoint(beat, n, r, cx, cy);
+          const uniformAng = (-90 + beat * (360 / n)) * (Math.PI / 180);
+          const ang = beatAngleMap.get(beat) ?? uniformAng;
+          const x = cx + r * Math.cos(ang);
+          const y = cy + r * Math.sin(ang);
           const tx2 = cx + (r + 3.5) * Math.cos(ang);
           const ty2 = cy + (r + 3.5) * Math.sin(ang);
           const lx = cx + (r + 9) * Math.cos(ang);
@@ -220,22 +252,18 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           );
         })}
 
-        {Object.entries(nodePulses).map(([beatStr, { key, color }]) => {
-          const beat = Number(beatStr);
-          const [x, y] = beatPoint(beat, n, r, cx, cy);
-          return (
-            <circle
-              key={`${beat}-${key}`}
-              cx={x}
-              cy={y}
-              r={2.5}
-              fill="none"
-              stroke={color}
-              strokeWidth={0.5}
-              className="node-pulse"
-            />
-          );
-        })}
+        {Object.entries(nodePulses).map(([slotKey, { key, color, x, y }]) => (
+          <circle
+            key={`${slotKey}-${key}`}
+            cx={x}
+            cy={y}
+            r={2.5}
+            fill="none"
+            stroke={color}
+            strokeWidth={0.5}
+            className="node-pulse"
+          />
+        ))}
 
         {arcTs.flatMap((t, i) => {
           if (t === null) return [];
