@@ -11,7 +11,7 @@ import {
   RING_RIGHT,
   RING_LEFT,
 } from "../../utils/geometry";
-import { throwEasing, pointOnPolygon, LOOP_MS } from "../../utils/animation";
+import { throwEasing, pointOnPolygonTimed, currentEdgeIndex, LOOP_MS } from "../../utils/animation";
 import { siteswapLabel } from "../../utils/notation";
 import "./FingerprintCard.css";
 
@@ -40,6 +40,8 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   useEffect(() => {
     const tealVerts = verticesFromBeats(rightBeats, n, r, cx, cy);
     const pinkVerts = verticesFromBeats(leftBeats, n, r, cx, cy);
+    const rightBeatFractions = rightBeats.map((b) => b / n);
+    const leftBeatFractions = leftBeats.map((b) => b / n);
     const throwTiming = animatorThrows.map((thr) => ({
       throwStart: thr.beat / n,
       throwDuration: thr.value / n,
@@ -58,15 +60,13 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       progress = (progress + (time - lastTime) / LOOP_MS) % 1;
       lastTime = time;
 
-      setTealPos(pointOnPolygon(tealVerts, progress));
-      const tealEdge =
-        Math.floor(progress * tealVerts.length) % tealVerts.length;
+      setTealPos(pointOnPolygonTimed(tealVerts, rightBeatFractions, progress));
+      const tealEdge = currentEdgeIndex(rightBeatFractions, progress);
       const tealHit = tealEdge !== lastTealEdge;
       if (tealHit) lastTealEdge = tealEdge;
 
-      setPinkPos(pointOnPolygon(pinkVerts, progress));
-      const pinkEdge =
-        Math.floor(progress * pinkVerts.length) % pinkVerts.length;
+      setPinkPos(pointOnPolygonTimed(pinkVerts, leftBeatFractions, progress));
+      const pinkEdge = currentEdgeIndex(leftBeatFractions, progress);
       const pinkHit = pinkEdge !== lastPinkEdge;
       if (pinkHit) lastPinkEdge = pinkEdge;
 
