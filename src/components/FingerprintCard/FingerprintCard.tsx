@@ -437,7 +437,14 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
           const ang1 = throwVertexAngle(thr, cycle, false);
           const ang2 = throwVertexAngle(thr, cycle, true);
-          const { x1, y1, mx, my, x2, y2 } = chordControlPoints(ang1, ang2, thr.value, r, cx, cy);
+          const { x1, y1, mx, my, x2, y2 } = chordControlPoints(
+            ang1,
+            ang2,
+            thr.value,
+            r,
+            cx,
+            cy,
+          );
           const q0x = x1 + (mx - x1) * tEased,
             q0y = y1 + (my - y1) * tEased;
           const q1x = mx + (x2 - mx) * tEased,
