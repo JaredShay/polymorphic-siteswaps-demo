@@ -25,10 +25,12 @@
 ### Task 1: `lcm`/`gcd` utility
 
 **Files:**
+
 - Create: `src/utils/math.ts`
 - Create: `src/utils/math.test.ts`
 
 **Interfaces:**
+
 - Produces: `export function gcd(a: number, b: number): number`, `export function lcm(a: number, b: number): number`
 
 - [ ] **Step 1: Write failing tests**
@@ -58,6 +60,7 @@ describe("lcm", () => {
 ```
 npm test -- src/utils/math.test.ts
 ```
+
 Expected: FAIL with "Cannot find module './math'"
 
 - [ ] **Step 3: Implement**
@@ -81,6 +84,7 @@ export function lcm(a: number, b: number): number {
 ```
 npm test -- src/utils/math.test.ts
 ```
+
 Expected: 8 tests pass
 
 - [ ] **Step 5: Commit**
@@ -95,10 +99,12 @@ git commit -m "feat: add lcm/gcd utility"
 ### Task 2: Update RhythmIcon — centered label and size prop
 
 **Files:**
+
 - Modify: `src/components/RhythmIcon/RhythmIcon.tsx`
 - Modify: `src/components/RhythmIcon/RhythmIcon.css`
 
 **Interfaces:**
+
 - Produces: `RhythmIcon` now accepts `label?: string` (SVG center text) and `size?: number` (px). Existing callers with only `rhythm` and `name` continue to work — the span below is shown when `label` is absent.
 
 - [ ] **Step 1: Replace RhythmIcon.tsx**
@@ -180,6 +186,7 @@ Add at the end of `src/components/RhythmIcon/RhythmIcon.css`:
 ```
 npx tsc --noEmit
 ```
+
 Expected: no errors (PresetsGrid still compiles because `label` is optional)
 
 - [ ] **Step 4: Commit**
@@ -194,11 +201,13 @@ git commit -m "feat: add label overlay and size prop to RhythmIcon"
 ### Task 3: RhythmSelector — preset icon grid with multi-select
 
 **Files:**
+
 - Create: `src/components/RhythmSelector/RhythmSelector.tsx`
 - Create: `src/components/RhythmSelector/RhythmSelector.css`
 - Create: `src/components/RhythmSelector/RhythmSelector.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `RhythmIcon` (rhythm, name, label, size); `RHYTHM_PRESETS`; `Rhythm` from `../../types`
 - Produces:
   ```typescript
@@ -207,9 +216,11 @@ git commit -m "feat: add label overlay and size prop to RhythmIcon"
     | { type: "custom"; rhythm: Rhythm };
 
   // Props
-  interface Props { onChange: (selection: RhythmSelection) => void }
+  interface Props {
+    onChange: (selection: RhythmSelection) => void;
+  }
 
-  export default function RhythmSelector(props: Props): JSX.Element
+  export default function RhythmSelector(props: Props): JSX.Element;
   ```
 
 Note on `onChange` timing: `RhythmSelector` uses a mount-skip ref so `onChange` is NOT called on initial render. `App.tsx` initializes `rhythmSelection` to match the component's default state `{type:"presets",families:["3over2"]}`, so no initial sync call is needed.
@@ -265,6 +276,7 @@ describe("RhythmSelector preset icons", () => {
 ```
 npm test -- src/components/RhythmSelector/RhythmSelector.test.tsx
 ```
+
 Expected: FAIL with "Cannot find module './RhythmSelector'"
 
 - [ ] **Step 3: Create RhythmSelector.tsx**
@@ -469,6 +481,7 @@ export default function RhythmSelector({ onChange }: Props) {
 ```
 npm test -- src/components/RhythmSelector/RhythmSelector.test.tsx
 ```
+
 Expected: 5 tests pass
 
 - [ ] **Step 6: Commit**
@@ -483,22 +496,26 @@ git commit -m "feat: add RhythmSelector preset icon grid"
 ### Task 4: RhythmSelector — custom expansion panel
 
 **Files:**
+
 - Modify: `src/components/RhythmSelector/RhythmSelector.tsx`
 - Modify: `src/components/RhythmSelector/RhythmSelector.css`
 - Modify: `src/components/RhythmSelector/RhythmSelector.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `lcm` from `../../utils/math`
 - Produces: same `RhythmSelector`; when custom is active, `onChange` fires with `{type:"custom", rhythm: Rhythm}` where `rhythm` is derived from `customConfig` via `configToRhythm`
 
 - [ ] **Step 1: Append failing tests to RhythmSelector.test.tsx**
 
 Add these imports at the top of the file:
+
 ```typescript
 import { RHYTHM_PRESETS } from "../../data/rhythmPresets";
 ```
 
 Append to the file:
+
 ```typescript
 describe("Custom mode", () => {
   it("disables all preset buttons when custom is active", () => {
@@ -560,6 +577,7 @@ describe("Custom mode", () => {
 ```
 npm test -- src/components/RhythmSelector/RhythmSelector.test.tsx
 ```
+
 Expected: 5 original pass, 6 new fail
 
 - [ ] **Step 3: Replace RhythmSelector.tsx with full implementation**
@@ -910,6 +928,7 @@ export default function RhythmSelector({ onChange }: Props) {
 ```
 npm test -- src/components/RhythmSelector/RhythmSelector.test.tsx
 ```
+
 Expected: all 11 tests pass
 
 - [ ] **Step 6: Commit**
@@ -926,6 +945,7 @@ git commit -m "feat: add custom rhythm expansion panel to RhythmSelector"
 This task touches several files in one go to keep the codebase compilable at each step. Do them in the order listed.
 
 **Files:**
+
 - Modify: `src/types.ts`
 - Modify: `src/utils/url.ts`
 - Modify: `src/utils/url.test.ts`
@@ -936,6 +956,7 @@ This task touches several files in one go to keep the codebase compilable at eac
 - Delete: `src/components/PresetsGrid/PresetsGrid.css`
 
 **Interfaces:**
+
 - Consumes: `RhythmSelection` from `./components/RhythmSelector/RhythmSelector`
 - Produces: working app with `RhythmSelector` in the generator section, `PresetsGrid` gone, `FilterPanel` without the Rhythm row
 
@@ -1014,6 +1035,7 @@ const url = buildUrl(mockPattern, {
 - [ ] **Step 4: Remove `family` from serialize/deserialize in `src/hooks/useGenerator.ts`**
 
 Replace `serializeSession`:
+
 ```typescript
 function serializeSession(s: GenerationSession): object {
   return {
@@ -1028,6 +1050,7 @@ function serializeSession(s: GenerationSession): object {
 ```
 
 Replace `deserializeSession`:
+
 ```typescript
 function deserializeSession(raw: Record<string, unknown>): GenerationSession {
   const f = raw.filters as Record<string, string[]>;
@@ -1391,6 +1414,7 @@ git rm src/components/PresetsGrid/PresetsGrid.tsx src/components/PresetsGrid/Pre
 ```
 npm test
 ```
+
 Expected: all tests pass
 
 - [ ] **Step 9: Type-check**
@@ -1398,6 +1422,7 @@ Expected: all tests pass
 ```
 npx tsc --noEmit
 ```
+
 Expected: no errors
 
 - [ ] **Step 10: Commit**

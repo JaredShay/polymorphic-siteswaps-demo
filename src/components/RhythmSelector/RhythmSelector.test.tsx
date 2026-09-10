@@ -22,8 +22,12 @@ describe("RhythmSelector preset icons", () => {
     fireEvent.click(screen.getByLabelText("4 over 3"));
     const call = onChange.mock.calls.at(-1)![0] as RhythmSelection;
     expect(call.type).toBe("presets");
-    expect((call as { type: "presets"; families: string[] }).families).toContain("4over3");
-    expect((call as { type: "presets"; families: string[] }).families).toContain("3over2");
+    expect(
+      (call as { type: "presets"; families: string[] }).families,
+    ).toContain("4over3");
+    expect(
+      (call as { type: "presets"; families: string[] }).families,
+    ).toContain("3over2");
   });
 
   it("does not deselect the last active preset", () => {
@@ -45,7 +49,9 @@ describe("Custom mode", () => {
     render(<RhythmSelector onChange={() => {}} />);
     fireEvent.click(screen.getByLabelText("Custom rhythm"));
     RHYTHM_PRESETS.forEach((p) => {
-      expect(screen.getByLabelText(p.label.replace(" : ", " over "))).toBeDisabled();
+      expect(
+        screen.getByLabelText(p.label.replace(" : ", " over ")),
+      ).toBeDisabled();
     });
   });
 
@@ -55,7 +61,9 @@ describe("Custom mode", () => {
     fireEvent.click(screen.getByLabelText("Custom rhythm"));
     const call = onChange.mock.calls.at(-1)![0] as RhythmSelection;
     expect(call.type).toBe("custom");
-    expect((call as { type: "custom"; rhythm: { n: number } }).rhythm.n).toBeGreaterThan(0);
+    expect(
+      (call as { type: "custom"; rhythm: { n: number } }).rhythm.n,
+    ).toBeGreaterThan(0);
   });
 
   it("shows the custom config panel when custom is active", () => {

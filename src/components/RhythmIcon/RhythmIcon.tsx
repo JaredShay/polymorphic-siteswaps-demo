@@ -4,15 +4,23 @@ import "./RhythmIcon.css";
 
 interface Props {
   rhythm: Rhythm;
-  name: string;       // aria-label on the SVG
-  label?: string;     // if provided: shown as centered SVG text; span below is hidden
-  size?: number;      // explicit px width/height for the outer div
+  name: string; // aria-label on the SVG
+  label?: string; // if provided: shown as centered SVG text; span below is hidden
+  size?: number; // explicit px width/height for the outer div
   decorative?: boolean; // if true: SVG is aria-hidden (used inside already-labelled buttons)
 }
 
-const r = 52, cx = 64, cy = 64;
+const r = 52,
+  cx = 64,
+  cy = 64;
 
-export default function RhythmIcon({ rhythm, name, label, size, decorative }: Props) {
+export default function RhythmIcon({
+  rhythm,
+  name,
+  label,
+  size,
+  decorative,
+}: Props) {
   const { n, leftBeats, rightBeats } = rhythm;
 
   return (
@@ -39,13 +47,7 @@ export default function RhythmIcon({ rhythm, name, label, size, decorative }: Pr
         />
         {label && (
           <>
-            <circle
-              cx={cx}
-              cy={cy}
-              r={22}
-              fill="var(--bg)"
-              opacity={0.72}
-            />
+            <circle cx={cx} cy={cy} r={22} fill="var(--bg)" opacity={0.72} />
             <text
               x={cx}
               y={cy}
@@ -58,7 +60,9 @@ export default function RhythmIcon({ rhythm, name, label, size, decorative }: Pr
           </>
         )}
       </svg>
-      {!label && !decorative && <span className="rhythm-icon__name">{name}</span>}
+      {!label && !decorative && (
+        <span className="rhythm-icon__name">{name}</span>
+      )}
     </div>
   );
 }

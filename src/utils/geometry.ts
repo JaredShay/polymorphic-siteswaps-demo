@@ -173,10 +173,10 @@ export function chordParams(
 ) {
   const ang1 = beatAng
     ? beatAng(beat)
-    : (-Math.PI / 2 + (beat / n) * 2 * Math.PI);
+    : -Math.PI / 2 + (beat / n) * 2 * Math.PI;
   const ang2 = beatAng
     ? beatAng((beat + value) % n)
-    : (-Math.PI / 2 + (((beat + value) % n) / n) * 2 * Math.PI);
+    : -Math.PI / 2 + (((beat + value) % n) / n) * 2 * Math.PI;
   const x1 = cx + r * Math.cos(ang1);
   const y1 = cy + r * Math.sin(ang1);
   const x2 = cx + r * Math.cos(ang2);

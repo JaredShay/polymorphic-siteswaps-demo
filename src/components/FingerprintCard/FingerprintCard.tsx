@@ -8,13 +8,17 @@ import {
   verticesFromBeats,
   verticesFromAngles,
   chordalHand,
-
   circularArcPath,
   SELF_LOOP_R,
   RING_RIGHT,
   RING_LEFT,
 } from "../../utils/geometry";
-import { throwEasing, pointOnPolygonTimed, currentEdgeIndex, LOOP_MS } from "../../utils/animation";
+import {
+  throwEasing,
+  pointOnPolygonTimed,
+  currentEdgeIndex,
+  LOOP_MS,
+} from "../../utils/animation";
 import { siteswapLabel } from "../../utils/notation";
 import "./FingerprintCard.css";
 
@@ -36,10 +40,15 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const [nodePulses, setNodePulses] = useState<
     Record<string, { key: number; color: string; x: number; y: number }>
   >({});
-  const [arcTs, setArcTs] = useState<({ t: number; cycle: number } | null)[]>([]);
+  const [arcTs, setArcTs] = useState<({ t: number; cycle: number } | null)[]>(
+    [],
+  );
 
   const animatorThrows = useMemo(() => toAnimatorThrows(beats), [beats]);
-  const chordedRight = useMemo(() => chordalHand(rightBeats, n), [rightBeats, n]);
+  const chordedRight = useMemo(
+    () => chordalHand(rightBeats, n),
+    [rightBeats, n],
+  );
   const chordedLeft = useMemo(() => chordalHand(leftBeats, n), [leftBeats, n]);
 
   // Map from original beat index → chordal angle, for rendering dots/labels
@@ -63,7 +72,11 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
   // For 2-cycle hands, arcs in cycle 1 must use the second-cycle vertex angle.
   // isLanding=true computes the landing vertex (accounting for carry-over into next cycle).
-  function throwVertexAngle(thr: AnimatorThrow, cycle: number, isLanding: boolean): number {
+  function throwVertexAngle(
+    thr: AnimatorThrow,
+    cycle: number,
+    isLanding: boolean,
+  ): number {
     const chorded = thr.side === "right" ? chordedRight : chordedLeft;
     const handBeats = thr.side === "right" ? rightBeats : leftBeats;
     if (!chorded || chorded.periodScale === 1) {
@@ -107,14 +120,19 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       const handBeats = thr.side === "right" ? rightBeats : leftBeats;
       if (chorded && chorded.periodScale > 1) {
         const beatIdx = handBeats.indexOf(thr.beat);
-        const throwStart = beatIdx >= 0 ? chorded.beatFractions[beatIdx] : thr.beat / n;
+        const throwStart =
+          beatIdx >= 0 ? chorded.beatFractions[beatIdx] : thr.beat / n;
         return {
           throwStart,
           throwDuration: thr.value / (n * chorded.periodScale),
           periodScale: chorded.periodScale,
         };
       }
-      return { throwStart: thr.beat / n, throwDuration: thr.value / n, periodScale: 1 };
+      return {
+        throwStart: thr.beat / n,
+        throwDuration: thr.value / n,
+        periodScale: 1,
+      };
     });
 
     setArcTs(animatorThrows.map(() => null));
@@ -185,8 +203,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       setArcTs(
         throwTiming.map(({ throwStart, throwDuration, periodScale }) => {
           for (let c = 0; c < periodScale; c++) {
-            const elapsed = (((progress - throwStart - c / periodScale) % 1) + 1) % 1;
-            if (elapsed <= throwDuration) return { t: elapsed / throwDuration, cycle: c };
+            const elapsed =
+              (((progress - throwStart - c / periodScale) % 1) + 1) % 1;
+            if (elapsed <= throwDuration)
+              return { t: elapsed / throwDuration, cycle: c };
           }
           return null;
         }),
@@ -205,9 +225,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       i < beats.length - 1 ? beats[i + 1] - b : n - b + beats[0],
     );
     const allEqual = intervals.every((v) => v === intervals[0]);
-    return allEqual
-      ? `every ${intervals[0]} beats`
-      : `${beats.length} beats`;
+    return allEqual ? `every ${intervals[0]} beats` : `${beats.length} beats`;
   }
 
   return (
@@ -233,18 +251,22 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         <path
-          d={chordedRight
-            ? ringPathFromAngles(chordedRight.angles, r, cx, cy)
-            : ringPathFromBeats(rightBeats, n, r, cx, cy)}
+          d={
+            chordedRight
+              ? ringPathFromAngles(chordedRight.angles, r, cx, cy)
+              : ringPathFromBeats(rightBeats, n, r, cx, cy)
+          }
           fill="none"
           className="fingerprint-ring-right"
           strokeWidth={0.5}
           opacity={0.6}
         />
         <path
-          d={chordedLeft
-            ? ringPathFromAngles(chordedLeft.angles, r, cx, cy)
-            : ringPathFromBeats(leftBeats, n, r, cx, cy)}
+          d={
+            chordedLeft
+              ? ringPathFromAngles(chordedLeft.angles, r, cx, cy)
+              : ringPathFromBeats(leftBeats, n, r, cx, cy)
+          }
           fill="none"
           className="fingerprint-ring-left"
           strokeWidth={0.5}
@@ -271,9 +293,8 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
           // Label: beat index for all active beats; nothing for inactive beats
           // in chordal mode (avoids confusing float interval values).
-          const label = !isChordal || isLeft || isRight
-            ? siteswapLabel(beat)
-            : null;
+          const label =
+            !isChordal || isLeft || isRight ? siteswapLabel(beat) : null;
 
           return (
             <g key={beat}>

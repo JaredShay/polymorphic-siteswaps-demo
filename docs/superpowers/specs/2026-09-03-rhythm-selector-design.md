@@ -24,21 +24,21 @@ A self-contained component that owns all rhythm selection state and emits a type
 
 ```typescript
 type RhythmSelection =
-  | { type: "presets"; families: string[] }  // one or more preset ids, multi-select
-  | { type: "custom"; rhythm: Rhythm }        // fully custom-defined rhythm
+  | { type: "presets"; families: string[] } // one or more preset ids, multi-select
+  | { type: "custom"; rhythm: Rhythm }; // fully custom-defined rhythm
 ```
 
 **Internal state:**
 
 ```typescript
 {
-  selectedFamilies: Set<string>   // which preset icons are toggled
-  customActive: boolean           // whether custom mode is active
+  selectedFamilies: Set<string>; // which preset icons are toggled
+  customActive: boolean; // whether custom mode is active
   customConfig: {
-    leftLength: number            // 2–8
-    rightLength: number           // 2–8
-    leftBeats: Set<number>        // indices into left hand's slots
-    rightBeats: Set<number>       // indices into right hand's slots
+    leftLength: number; // 2–8
+    rightLength: number; // 2–8
+    leftBeats: Set<number>; // indices into left hand's slots
+    rightBeats: Set<number>; // indices into right hand's slots
   }
 }
 ```
@@ -55,6 +55,7 @@ Multi-select toggle behavior: clicking a preset toggles it on/off. At least one 
 ### Custom Icon
 
 An 8th icon button in the same row, visually distinct: dashed ring with a `+` center. Selecting it:
+
 - Sets `customActive = true`
 - Greys out all preset icon buttons
 - Expands the custom configuration panel inline below the icon row
@@ -93,7 +94,7 @@ type FilterState = {
   state: Set<string>;
   cycles: Set<string>;
   // family removed
-}
+};
 ```
 
 ### App.tsx Integration
@@ -108,11 +109,13 @@ type FilterState = {
 ## Files
 
 ### New
+
 - `src/components/RhythmSelector/RhythmSelector.tsx`
 - `src/components/RhythmSelector/RhythmSelector.css`
 - `src/utils/math.ts` — `lcm(a, b)` utility
 
 ### Modified
+
 - `src/types.ts` — remove `family` from `FilterState`
 - `src/App.tsx` — remove PresetsGrid, handleSelectPreset; wire RhythmSelector; update filtersToParamSets
 - `src/components/FilterPanel/FilterPanel.tsx` — remove Rhythm row
@@ -120,6 +123,7 @@ type FilterState = {
 - `src/components/RhythmIcon/RhythmIcon.tsx` — centered text overlay; size prop
 
 ### Deleted
+
 - `src/components/PresetsGrid/PresetsGrid.tsx`
 - `src/components/PresetsGrid/PresetsGrid.css`
 

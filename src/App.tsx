@@ -48,13 +48,23 @@ function filtersToParamSets(
   const hasGround = filters.state.has("ground");
   const hasActive = filters.state.has("active");
 
-  type Combo = { family: string; balls: number; cycles: number; rhythm: Rhythm };
+  type Combo = {
+    family: string;
+    balls: number;
+    cycles: number;
+    rhythm: Rhythm;
+  };
   const combos: Combo[] = [];
 
   if (rhythmSelection.type === "custom") {
     for (const balls of ballsArr) {
       for (const cycles of cyclesArr) {
-        combos.push({ family: "custom", balls, cycles, rhythm: rhythmSelection.rhythm });
+        combos.push({
+          family: "custom",
+          balls,
+          cycles,
+          rhythm: rhythmSelection.rhythm,
+        });
       }
     }
   } else {
@@ -227,7 +237,10 @@ export default function App() {
 
       <div className="app__generator">
         <h2 className="app__section-heading">Build a pattern</h2>
-        <RhythmSelector onChange={handleRhythmChange} initialSelection={INIT_RHYTHM} />
+        <RhythmSelector
+          onChange={handleRhythmChange}
+          initialSelection={INIT_RHYTHM}
+        />
         <FilterPanel filters={filters} onChange={setFilters} />
         <button
           className="app__generate-btn"

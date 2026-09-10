@@ -37,14 +37,18 @@ export function pointOnPolygonTimed(
   }
   const edgeStart = beatFractions[edge];
   const edgeEnd = edge < len - 1 ? beatFractions[edge + 1] : 1.0;
-  const t = edgeEnd > edgeStart ? (progress - edgeStart) / (edgeEnd - edgeStart) : 0;
+  const t =
+    edgeEnd > edgeStart ? (progress - edgeStart) / (edgeEnd - edgeStart) : 0;
   const [x1, y1] = verts[edge];
   const [x2, y2] = verts[(edge + 1) % len];
   return [x1 + (x2 - x1) * t, y1 + (y2 - y1) * t];
 }
 
 // Returns the index of the current polygon edge based on beat fractions.
-export function currentEdgeIndex(beatFractions: number[], progress: number): number {
+export function currentEdgeIndex(
+  beatFractions: number[],
+  progress: number,
+): number {
   let edge = 0;
   for (let i = 0; i < beatFractions.length; i++) {
     if (beatFractions[i] <= progress) edge = i;

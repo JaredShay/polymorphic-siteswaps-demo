@@ -140,7 +140,11 @@
 
 .rhythm-selector__beat-slot:hover {
   border-color: var(--beat-color, var(--hairline-strong));
-  background: color-mix(in srgb, var(--beat-color, transparent) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--beat-color, transparent) 10%,
+    transparent
+  );
 }
 
 .rhythm-selector__beat-slot--active {
