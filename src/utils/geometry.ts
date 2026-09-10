@@ -82,11 +82,13 @@ export function chordalAngles(beats: number[], n: number): number[] | null {
 // effectiveBeats[i] is the original beat (mod n) for vertex i.
 // beatFractions[i] is the timing fraction in [0,1) for pointOnPolygonTimed.
 // intervalLabels[i] is the interval count from vertex i to vertex (i+1)%m.
+// periodScale: 1 for single-cycle layout, 2 for 2-cycle layout.
 export type ChordedHand = {
   angles: number[];
   effectiveBeats: number[];
   beatFractions: number[];
   intervalLabels: string[];
+  periodScale: number;
 };
 
 // Try single-cycle chordal; fall back to 2-cycle for m<3 or unsolvable m=3.
@@ -105,6 +107,7 @@ export function chordalHand(beats: number[], n: number): ChordedHand | null {
       effectiveBeats: [...beats],
       beatFractions: beats.map((b) => b / n),
       intervalLabels: intervals.map(String),
+      periodScale: 1,
     };
   }
 
@@ -129,6 +132,7 @@ export function chordalHand(beats: number[], n: number): ChordedHand | null {
     effectiveBeats: doubled.map((b) => b % n),
     beatFractions: doubled.map((b) => b / doubledN),
     intervalLabels: intervals.map(String),
+    periodScale: 2,
   };
 }
 

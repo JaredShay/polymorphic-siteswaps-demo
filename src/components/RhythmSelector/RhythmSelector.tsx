@@ -24,6 +24,28 @@ const DEFAULT_CUSTOM: CustomConfig = {
   rightBeats: new Set([0]),
 };
 
+function rhythmToConfig(rhythm: Rhythm): CustomConfig {
+  const { n, leftBeats, rightBeats } = rhythm;
+  // Find the smallest length in [2,8] that divides n and whose scale
+  // (n / length) divides every beat position exactly.
+  function findLength(beats: number[]): number {
+    for (let len = 2; len <= 8; len++) {
+      if (n % len !== 0) continue;
+      const scale = n / len;
+      if (beats.every((b) => b % scale === 0)) return len;
+    }
+    return 2;
+  }
+  const leftLength = findLength(leftBeats);
+  const rightLength = findLength(rightBeats);
+  return {
+    leftLength,
+    rightLength,
+    leftBeats: new Set(leftBeats.map((b) => b / (n / leftLength))),
+    rightBeats: new Set(rightBeats.map((b) => b / (n / rightLength))),
+  };
+}
+
 function configToRhythm(cfg: CustomConfig): Rhythm {
   const n = lcm(cfg.leftLength, cfg.rightLength);
   const leftScale = n / cfg.leftLength;
@@ -41,15 +63,23 @@ function configToRhythm(cfg: CustomConfig): Rhythm {
 
 interface Props {
   onChange: (selection: RhythmSelection) => void;
+  initialSelection?: RhythmSelection;
 }
 
-export default function RhythmSelector({ onChange }: Props) {
+export default function RhythmSelector({ onChange, initialSelection }: Props) {
+  const initCustom =
+    initialSelection?.type === "custom"
+      ? rhythmToConfig(initialSelection.rhythm)
+      : DEFAULT_CUSTOM;
   const [selectedFamilies, setSelectedFamilies] = useState<Set<string>>(
-    new Set(["3over2"]),
+    initialSelection?.type === "presets"
+      ? new Set(initialSelection.families)
+      : new Set(["3over2"]),
   );
-  const [customActive, setCustomActive] = useState(false);
-  const [customConfig, setCustomConfig] =
-    useState<CustomConfig>(DEFAULT_CUSTOM);
+  const [customActive, setCustomActive] = useState(
+    initialSelection?.type === "custom",
+  );
+  const [customConfig, setCustomConfig] = useState<CustomConfig>(initCustom);
 
   // Skip first render — App.tsx initialises rhythmSelection to match our defaults
   const mounted = useRef(false);
@@ -132,7 +162,6 @@ export default function RhythmSelector({ onChange }: Props) {
               .join(" ")}
             onClick={() => togglePreset(p.id)}
             aria-pressed={selectedFamilies.has(p.id) && !customActive}
-            disabled={customActive}
             data-preset-id={p.id}
             aria-label={p.label.replace(" : ", " over ")}
           >

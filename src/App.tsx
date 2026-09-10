@@ -95,8 +95,24 @@ function displayFamily(p: Pattern): string {
 const INIT_FILTERS = parseInitialFilters();
 const INIT_URL_PATTERN = patternFromUrl(new URLSearchParams(location.search));
 
-// Matches RhythmSelector's initial internal state; kept in sync manually.
-const INIT_RHYTHM: RhythmSelection = { type: "presets", families: ["3over2"] };
+const INIT_RHYTHM: RhythmSelection = (() => {
+  if (INIT_URL_PATTERN?.family !== "custom") {
+    return { type: "presets", families: ["3over2"] };
+  }
+  // The URL stores the expanded (cycles×n) rhythm; collapse to the base rhythm
+  // that the custom selector uses.
+  const { rhythm, cycles } = INIT_URL_PATTERN;
+  const baseN = rhythm.n / cycles;
+  const baseRhythm: Rhythm =
+    cycles <= 1
+      ? rhythm
+      : {
+          n: baseN,
+          leftBeats: rhythm.leftBeats.filter((b) => b < baseN),
+          rightBeats: rhythm.rightBeats.filter((b) => b < baseN),
+        };
+  return { type: "custom", rhythm: baseRhythm };
+})();
 
 export default function App() {
   const [filters, setFilters] = useState<FilterState>(INIT_FILTERS);
@@ -211,7 +227,7 @@ export default function App() {
 
       <div className="app__generator">
         <h2 className="app__section-heading">Build a pattern</h2>
-        <RhythmSelector onChange={handleRhythmChange} />
+        <RhythmSelector onChange={handleRhythmChange} initialSelection={INIT_RHYTHM} />
         <FilterPanel filters={filters} onChange={setFilters} />
         <button
           className="app__generate-btn"

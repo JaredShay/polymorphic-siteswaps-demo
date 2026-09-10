@@ -463,7 +463,7 @@ export function runGenerator(
     // Independent random walk per pattern: restart from scratch after each find.
     // Stop when limits are met or 100 consecutive walks yield no new pattern.
     let consecutiveFails = 0;
-    const maxConsecutiveFails = 100;
+    const maxConsecutiveFails = 1000;
     while (!abortRef.aborted && consecutiveFails < maxConsecutiveFails) {
       const groundDone =
         groundLimit === 0 || ctx.groundResults.length >= groundLimit;

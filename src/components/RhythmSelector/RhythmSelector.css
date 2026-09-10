@@ -28,7 +28,6 @@
 
 .rhythm-selector__icon-btn--muted {
   opacity: 0.35;
-  pointer-events: none;
 }
 
 .rhythm-selector__icon-btn:focus-visible {
