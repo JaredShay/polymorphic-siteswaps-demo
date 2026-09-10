@@ -13,10 +13,12 @@ This is a **static site**. The Ruby backend runs offline and writes JSON files t
 ### Backend modules
 
 - **Generator** (`generator.rb`): DFS search producing raw beat arrays
+- **Simplifier** (`simplifier.rb`): orchestrates the transform pipeline; exposes named presets (raw, halved, compact, full)
 - **Transforms** (`transforms.rb`): composable post-processing (Halve, CancelPairs, Expand) — display only, not core to generation
 - **Formatters** (`formatter.rb`): convert raw beat arrays to strings or structured beat data for the JSON schema
 - **Specs** (`specs.rb`): beat layouts (period, left_beats, right_beats) per polyrhythm family
 - **Notation** (`notation.rb`): Dry::Struct types for the internal beat representation
+- **Types** (`types.rb`): Dry::Types validators (ThrowValue, EvenThrow, etc.) — shared by notation and generator
 
 ---
 
@@ -129,6 +131,16 @@ For non-uniform rhythms, **median** gap is used rather than minimum. The minimum
 | clave  | [3,3,4,2,4] | 3        | [4,4,4,4] | 4        | 3   | 7.5 |
 
 For new rhythms, compute BPS directly from the beat arrays in the spec using the formula above.
+
+---
+
+## Frontend
+
+The React frontend is a pattern browser and visualiser. The central UI concept is the **FingerprintCard**: an animated SVG that gives each polyrhythmic siteswap a unique visual identity. The rhythm's period defines a set of beat-slot nodes arranged around a circle. The left-hand beat positions form one polygon, the right-hand positions form another, and two glowing dots traverse their respective polygons continuously, one lap per loop. Each time a dot crosses a vertex a ring pulse fires at that node. Overlaid on the static polygons are live throw arcs: quadratic Bézier curves that animate from the throwing beat toward the landing beat, one arc per throw in flight at any given moment. Self-loop throws (where a ball returns to the same beat index) render as small orbiting circles instead of chords. The result reads as a kind of fingerprint — the shape of the intersecting polygons and the arc structure together identify the rhythm and the siteswap at a glance. For evenly-spaced rhythms, beat nodes sit at uniform angular intervals and the polygons are regular. For rhythms where a hand's beats are non-uniformly spaced, the geometry module solves for a chordal layout: vertices are repositioned around the circle so that each polygon edge length is proportional to the corresponding inter-beat interval, giving the visual shape a direct relationship to the rhythm's timing structure. The hand legend describes evenly-spaced hands with a single interval value and non-uniform hands by beat count.
+
+The code is split into clear responsibilities. `src/types.ts` defines the shared data model (`ApiBeat`, `Rhythm`, `Pattern`). `src/data/rhythmPresets.ts` is the single source of truth for the seven supported rhythms — each maps a human label to the beat-slot assignments for left and right hands. `src/utils/geometry.ts` handles all spatial calculations: mapping beat indices to angles and SVG coordinates, computing chord control points, and approximating circular arcs as cubic Bézier segments. `src/utils/animation.ts` owns the timing layer: the canonical loop duration, the polygon traversal function, and the physical throw-easing curve (fast at release and catch, slow at apex). `src/utils/beats.ts` translates the flat `ApiBeat[]` wire format into two purpose-built views — one for the SVG animator and one for the text notation display — keeping those two consumers fully decoupled. `FingerprintCard` itself drives a single `requestAnimationFrame` loop, holds all transient animation state locally, and composes everything above into the rendered SVG. Its semantic inputs are `rhythm` and `beats`; it is otherwise self-contained.
+
+`App.tsx` owns data loading and selection. Patterns are fetched lazily by rhythm family from `data/{family}.json`, filtered client-side by the active `FilterState`, and one is picked at random. The active pattern and filter settings are round-tripped through the URL so specific patterns can be shared. Notation display lives in a separate `NotationDisplay` component that receives its own purpose-built view of the beats rather than raw data, so the FingerprintCard and the text view both work from the same source data transformed independently to suit their needs.
 
 ---
 

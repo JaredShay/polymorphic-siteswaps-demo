@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import type { ApiBeat, Rhythm } from "../../types";
 import { toAnimatorThrows, type AnimatorThrow } from "../../utils/beats";
 import {
-  beatPoint,
+  beatAngle,
   ringPathFromBeats,
   ringPathFromAngles,
   verticesFromBeats,
   verticesFromAngles,
   chordalHand,
+  chordControlPoints,
   circularArcPath,
   SELF_LOOP_R,
   RING_RIGHT,
@@ -67,8 +68,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const isChordal = chordedRight !== null || chordedLeft !== null;
 
   // Angle lookup for throw arcs: use chordal position when available
-  const beatAngFn = (b: number) =>
-    beatAngleMap.get(b) ?? -Math.PI / 2 + (b / n) * 2 * Math.PI;
+  const beatAngFn = (b: number) => beatAngleMap.get(b) ?? beatAngle(b, n);
 
   // For 2-cycle hands, arcs in cycle 1 must use the second-cycle vertex angle.
   // isLanding=true computes the landing vertex (accounting for carry-over into next cycle).
@@ -274,8 +274,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         {Array.from({ length: n }, (_, beat) => {
-          const uniformAng = (-90 + beat * (360 / n)) * (Math.PI / 180);
-          const ang = beatAngleMap.get(beat) ?? uniformAng;
+          const ang = beatAngleMap.get(beat) ?? beatAngle(beat, n);
           const x = cx + r * Math.cos(ang);
           const y = cy + r * Math.sin(ang);
           const lx = cx + (r + 9) * Math.cos(ang);
@@ -438,13 +437,7 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
           const ang1 = throwVertexAngle(thr, cycle, false);
           const ang2 = throwVertexAngle(thr, cycle, true);
-          const x1 = cx + r * Math.cos(ang1);
-          const y1 = cy + r * Math.sin(ang1);
-          const x2 = cx + r * Math.cos(ang2);
-          const y2 = cy + r * Math.sin(ang2);
-          const bow = 0.16 + thr.value / 40;
-          const mx = cx + ((x1 + x2) / 2 - cx) * bow;
-          const my = cy + ((y1 + y2) / 2 - cy) * bow;
+          const { x1, y1, mx, my, x2, y2 } = chordControlPoints(ang1, ang2, thr.value, r, cx, cy);
           const q0x = x1 + (mx - x1) * tEased,
             q0y = y1 + (my - y1) * tEased;
           const q1x = mx + (x2 - mx) * tEased,

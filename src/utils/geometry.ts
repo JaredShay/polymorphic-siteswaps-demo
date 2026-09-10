@@ -4,6 +4,10 @@ export const RING_LEFT = "#22D3EE";
 
 export const SELF_LOOP_R = 28;
 
+export function beatAngle(beat: number, n: number): number {
+  return (-90 + beat * (360 / n)) * (Math.PI / 180);
+}
+
 export function beatPoint(
   beat: number,
   n: number,
@@ -11,7 +15,7 @@ export function beatPoint(
   cx: number,
   cy: number,
 ): [number, number] {
-  const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
+  const ang = beatAngle(beat, n);
   return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
 }
 
@@ -162,21 +166,14 @@ export function ringPathFromAngles(
   );
 }
 
-export function chordParams(
-  beat: number,
+export function chordControlPoints(
+  ang1: number,
+  ang2: number,
   value: number,
-  n: number,
   r: number,
   cx: number,
   cy: number,
-  beatAng?: (b: number) => number,
 ) {
-  const ang1 = beatAng
-    ? beatAng(beat)
-    : -Math.PI / 2 + (beat / n) * 2 * Math.PI;
-  const ang2 = beatAng
-    ? beatAng((beat + value) % n)
-    : -Math.PI / 2 + (((beat + value) % n) / n) * 2 * Math.PI;
   const x1 = cx + r * Math.cos(ang1);
   const y1 = cy + r * Math.sin(ang1);
   const x2 = cx + r * Math.cos(ang2);
