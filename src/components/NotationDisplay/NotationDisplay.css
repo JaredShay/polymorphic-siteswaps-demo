@@ -3,23 +3,6 @@
   padding: 22px 0;
 }
 
-.notation-display::after {
-  content: "";
-  display: block;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent
-  );
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
 .notation-display__beats {
   display: grid;
   margin-bottom: 16px;

@@ -1,17 +1,24 @@
 import { useState, useEffect, useMemo } from "react";
 import type { ApiBeat, Rhythm } from "../../types";
-import { toAnimatorThrows } from "../../utils/beats";
+import { toAnimatorThrows, type AnimatorThrow } from "../../utils/beats";
 import {
   beatPoint,
   ringPathFromBeats,
+  ringPathFromAngles,
   verticesFromBeats,
-  chordParams,
+  verticesFromAngles,
+  chordalHand,
   circularArcPath,
   SELF_LOOP_R,
   RING_RIGHT,
   RING_LEFT,
 } from "../../utils/geometry";
-import { throwEasing, pointOnPolygon, LOOP_MS } from "../../utils/animation";
+import {
+  throwEasing,
+  pointOnPolygonTimed,
+  currentEdgeIndex,
+  LOOP_MS,
+} from "../../utils/animation";
 import { siteswapLabel } from "../../utils/notation";
 import "./FingerprintCard.css";
 
@@ -31,19 +38,102 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
   const [tealPos, setTealPos] = useState<[number, number]>([cx, cy - r]);
   const [pinkPos, setPinkPos] = useState<[number, number]>([cx, cy - r]);
   const [nodePulses, setNodePulses] = useState<
-    Record<number, { key: number; color: string }>
+    Record<string, { key: number; color: string; x: number; y: number }>
   >({});
-  const [arcTs, setArcTs] = useState<(number | null)[]>([]);
+  const [arcTs, setArcTs] = useState<({ t: number; cycle: number } | null)[]>(
+    [],
+  );
 
   const animatorThrows = useMemo(() => toAnimatorThrows(beats), [beats]);
+  const chordedRight = useMemo(
+    () => chordalHand(rightBeats, n),
+    [rightBeats, n],
+  );
+  const chordedLeft = useMemo(() => chordalHand(leftBeats, n), [leftBeats, n]);
+
+  // Map from original beat index → chordal angle, for rendering dots/labels
+  const beatAngleMap = useMemo(() => {
+    const map = new Map<number, number>();
+    // Only store first occurrence so label positions are stable
+    chordedRight?.effectiveBeats.forEach((b, i) => {
+      if (!map.has(b)) map.set(b, chordedRight.angles[i]);
+    });
+    chordedLeft?.effectiveBeats.forEach((b, i) => {
+      if (!map.has(b)) map.set(b, chordedLeft.angles[i]);
+    });
+    return map;
+  }, [chordedRight, chordedLeft]);
+
+  const isChordal = chordedRight !== null || chordedLeft !== null;
+
+  // Angle lookup for throw arcs: use chordal position when available
+  const beatAngFn = (b: number) =>
+    beatAngleMap.get(b) ?? -Math.PI / 2 + (b / n) * 2 * Math.PI;
+
+  // For 2-cycle hands, arcs in cycle 1 must use the second-cycle vertex angle.
+  // isLanding=true computes the landing vertex (accounting for carry-over into next cycle).
+  function throwVertexAngle(
+    thr: AnimatorThrow,
+    cycle: number,
+    isLanding: boolean,
+  ): number {
+    const chorded = thr.side === "right" ? chordedRight : chordedLeft;
+    const handBeats = thr.side === "right" ? rightBeats : leftBeats;
+    if (!chorded || chorded.periodScale === 1) {
+      return beatAngFn(isLanding ? (thr.beat + thr.value) % n : thr.beat);
+    }
+    const ps = chorded.periodScale;
+    const m = handBeats.length;
+    if (isLanding) {
+      const doubledLand = (thr.beat + cycle * n + thr.value) % (n * ps);
+      const landBeat = doubledLand % n;
+      const landCycle = Math.floor(doubledLand / n);
+      const idx = handBeats.indexOf(landBeat);
+      const vertIdx = idx + m * landCycle;
+      return vertIdx >= 0 && vertIdx < chorded.angles.length
+        ? chorded.angles[vertIdx]
+        : beatAngFn(landBeat);
+    } else {
+      const idx = handBeats.indexOf(thr.beat);
+      const vertIdx = idx + m * cycle;
+      return vertIdx >= 0 && vertIdx < chorded.angles.length
+        ? chorded.angles[vertIdx]
+        : beatAngFn(thr.beat);
+    }
+  }
 
   useEffect(() => {
-    const tealVerts = verticesFromBeats(rightBeats, n, r, cx, cy);
-    const pinkVerts = verticesFromBeats(leftBeats, n, r, cx, cy);
-    const throwTiming = animatorThrows.map((thr) => ({
-      throwStart: thr.beat / n,
-      throwDuration: thr.value / n,
-    }));
+    const tealVerts = chordedRight
+      ? verticesFromAngles(chordedRight.angles, r, cx, cy)
+      : verticesFromBeats(rightBeats, n, r, cx, cy);
+    const pinkVerts = chordedLeft
+      ? verticesFromAngles(chordedLeft.angles, r, cx, cy)
+      : verticesFromBeats(leftBeats, n, r, cx, cy);
+    const rightBeatFractions = chordedRight
+      ? chordedRight.beatFractions
+      : rightBeats.map((b) => b / n);
+    const leftBeatFractions = chordedLeft
+      ? chordedLeft.beatFractions
+      : leftBeats.map((b) => b / n);
+    const throwTiming = animatorThrows.map((thr) => {
+      const chorded = thr.side === "right" ? chordedRight : chordedLeft;
+      const handBeats = thr.side === "right" ? rightBeats : leftBeats;
+      if (chorded && chorded.periodScale > 1) {
+        const beatIdx = handBeats.indexOf(thr.beat);
+        const throwStart =
+          beatIdx >= 0 ? chorded.beatFractions[beatIdx] : thr.beat / n;
+        return {
+          throwStart,
+          throwDuration: thr.value / (n * chorded.periodScale),
+          periodScale: chorded.periodScale,
+        };
+      }
+      return {
+        throwStart: thr.beat / n,
+        throwDuration: thr.value / n,
+        periodScale: 1,
+      };
+    });
 
     setArcTs(animatorThrows.map(() => null));
 
@@ -58,15 +148,13 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       progress = (progress + (time - lastTime) / LOOP_MS) % 1;
       lastTime = time;
 
-      setTealPos(pointOnPolygon(tealVerts, progress));
-      const tealEdge =
-        Math.floor(progress * tealVerts.length) % tealVerts.length;
+      setTealPos(pointOnPolygonTimed(tealVerts, rightBeatFractions, progress));
+      const tealEdge = currentEdgeIndex(rightBeatFractions, progress);
       const tealHit = tealEdge !== lastTealEdge;
       if (tealHit) lastTealEdge = tealEdge;
 
-      setPinkPos(pointOnPolygon(pinkVerts, progress));
-      const pinkEdge =
-        Math.floor(progress * pinkVerts.length) % pinkVerts.length;
+      setPinkPos(pointOnPolygonTimed(pinkVerts, leftBeatFractions, progress));
+      const pinkEdge = currentEdgeIndex(leftBeatFractions, progress);
       const pinkHit = pinkEdge !== lastPinkEdge;
       if (pinkHit) lastPinkEdge = pinkEdge;
 
@@ -74,18 +162,37 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         setNodePulses((prev) => {
           const next = { ...prev };
           if (tealHit) {
-            const beat = rightBeats[tealEdge];
-            next[beat] = { key: (prev[beat]?.key ?? 0) + 1, color: RING_RIGHT };
+            const beat = chordedRight
+              ? chordedRight.effectiveBeats[tealEdge]
+              : rightBeats[tealEdge];
+            const [px, py] = tealVerts[tealEdge];
+            next[`r${tealEdge}`] = {
+              key: (prev[`r${tealEdge}`]?.key ?? 0) + 1,
+              color: RING_RIGHT,
+              x: px,
+              y: py,
+            };
+            void beat; // beat identity used below for same-as-teal check
           }
           if (pinkHit) {
-            const beat = leftBeats[pinkEdge];
-            const sameAsTeal = tealHit && rightBeats[tealEdge] === beat;
+            const pinkBeat = chordedLeft
+              ? chordedLeft.effectiveBeats[pinkEdge]
+              : leftBeats[pinkEdge];
+            const tealBeat = chordedRight
+              ? chordedRight.effectiveBeats[tealEdge]
+              : rightBeats[tealEdge];
+            const sameAsTeal = tealHit && tealBeat === pinkBeat;
+            const [px, py] = pinkVerts[pinkEdge];
+            const key = `p${pinkEdge}`;
             if (sameAsTeal) {
-              next[beat] = { ...next[beat], color: "#fff" };
+              // Collision: overwrite teal pulse at same position with white
+              next[`r${tealEdge}`] = { ...next[`r${tealEdge}`], color: "#fff" };
             } else {
-              next[beat] = {
-                key: (prev[beat]?.key ?? 0) + 1,
+              next[key] = {
+                key: (prev[key]?.key ?? 0) + 1,
                 color: RING_LEFT,
+                x: px,
+                y: py,
               };
             }
           }
@@ -94,10 +201,14 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
       }
 
       setArcTs(
-        throwTiming.map(({ throwStart, throwDuration }) => {
-          const elapsed = (((progress - throwStart) % 1) + 1) % 1;
-          if (elapsed > throwDuration) return null;
-          return elapsed / throwDuration;
+        throwTiming.map(({ throwStart, throwDuration, periodScale }) => {
+          for (let c = 0; c < periodScale; c++) {
+            const elapsed =
+              (((progress - throwStart - c / periodScale) % 1) + 1) % 1;
+            if (elapsed <= throwDuration)
+              return { t: elapsed / throwDuration, cycle: c };
+          }
+          return null;
         }),
       );
 
@@ -106,15 +217,15 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [n, leftBeats, rightBeats, animatorThrows]);
+  }, [n, leftBeats, rightBeats, animatorThrows, chordedRight, chordedLeft]);
 
   function handDesc(beats: number[]): string {
     if (beats.length === 0) return "silent";
     const intervals = beats.map((b, i) =>
-      i < beats.length - 1 ? beats[i + 1] - b : n - b,
+      i < beats.length - 1 ? beats[i + 1] - b : n - b + beats[0],
     );
     const allEqual = intervals.every((v) => v === intervals[0]);
-    return allEqual ? `every ${intervals[0]} beats` : intervals.join(" · ");
+    return allEqual ? `every ${intervals[0]} beats` : `${beats.length} beats`;
   }
 
   return (
@@ -140,14 +251,22 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         <path
-          d={ringPathFromBeats(rightBeats, n, r, cx, cy)}
+          d={
+            chordedRight
+              ? ringPathFromAngles(chordedRight.angles, r, cx, cy)
+              : ringPathFromBeats(rightBeats, n, r, cx, cy)
+          }
           fill="none"
           className="fingerprint-ring-right"
           strokeWidth={0.5}
           opacity={0.6}
         />
         <path
-          d={ringPathFromBeats(leftBeats, n, r, cx, cy)}
+          d={
+            chordedLeft
+              ? ringPathFromAngles(chordedLeft.angles, r, cx, cy)
+              : ringPathFromBeats(leftBeats, n, r, cx, cy)
+          }
           fill="none"
           className="fingerprint-ring-left"
           strokeWidth={0.5}
@@ -155,10 +274,10 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
         />
 
         {Array.from({ length: n }, (_, beat) => {
-          const ang = (-90 + beat * (360 / n)) * (Math.PI / 180);
-          const [x, y] = beatPoint(beat, n, r, cx, cy);
-          const tx2 = cx + (r + 3.5) * Math.cos(ang);
-          const ty2 = cy + (r + 3.5) * Math.sin(ang);
+          const uniformAng = (-90 + beat * (360 / n)) * (Math.PI / 180);
+          const ang = beatAngleMap.get(beat) ?? uniformAng;
+          const x = cx + r * Math.cos(ang);
+          const y = cy + r * Math.sin(ang);
           const lx = cx + (r + 9) * Math.cos(ang);
           const ly = cy + (r + 9) * Math.sin(ang);
           const isLeft = leftBeats.includes(beat);
@@ -171,27 +290,37 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
                 : isLeft
                   ? RING_LEFT
                   : null;
+
+          // Label: beat index for all active beats; nothing for inactive beats
+          // in chordal mode (avoids confusing float interval values).
+          const label =
+            !isChordal || isLeft || isRight ? siteswapLabel(beat) : null;
+
           return (
             <g key={beat}>
-              <line
-                x1={x.toFixed(1)}
-                y1={y.toFixed(1)}
-                x2={tx2.toFixed(1)}
-                y2={ty2.toFixed(1)}
-                stroke="rgba(255,255,255,.12)"
-                strokeWidth={0.3}
-              />
-              <text
-                x={lx.toFixed(1)}
-                y={ly.toFixed(1)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={3.5}
-                fill="rgba(255,255,255,.22)"
-                fontFamily="monospace"
-              >
-                {siteswapLabel(beat)}
-              </text>
+              {!isChordal && (
+                <line
+                  x1={x.toFixed(1)}
+                  y1={y.toFixed(1)}
+                  x2={(cx + (r + 3.5) * Math.cos(ang)).toFixed(1)}
+                  y2={(cy + (r + 3.5) * Math.sin(ang)).toFixed(1)}
+                  stroke="rgba(255,255,255,.12)"
+                  strokeWidth={0.3}
+                />
+              )}
+              {label !== null && (
+                <text
+                  x={lx.toFixed(1)}
+                  y={ly.toFixed(1)}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={3.5}
+                  fill="rgba(255,255,255,.22)"
+                  fontFamily="monospace"
+                >
+                  {label}
+                </text>
+              )}
               {dotColor ? (
                 <circle cx={x} cy={y} r={1.8} fill={dotColor} />
               ) : (
@@ -201,25 +330,57 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           );
         })}
 
-        {Object.entries(nodePulses).map(([beatStr, { key, color }]) => {
-          const beat = Number(beatStr);
-          const [x, y] = beatPoint(beat, n, r, cx, cy);
-          return (
-            <circle
-              key={`${beat}-${key}`}
-              cx={x}
-              cy={y}
-              r={2.5}
-              fill="none"
-              stroke={color}
-              strokeWidth={0.5}
-              className="node-pulse"
-            />
-          );
-        })}
+        {/* Second-cycle vertices for 2-cycle hands (same beat index, different position) */}
+        {isChordal &&
+          ([chordedRight, chordedLeft] as const).flatMap((ch, hi) => {
+            if (!ch) return [];
+            const color = hi === 0 ? RING_RIGHT : RING_LEFT;
+            const seen = new Set<number>();
+            return ch.effectiveBeats.flatMap((b, i) => {
+              if (seen.has(b)) {
+                const ang = ch.angles[i];
+                const vx = cx + r * Math.cos(ang);
+                const vy = cy + r * Math.sin(ang);
+                const lx2 = cx + (r + 9) * Math.cos(ang);
+                const ly2 = cy + (r + 9) * Math.sin(ang);
+                return [
+                  <g key={`sc-${hi}-${i}`} opacity={0.45}>
+                    <circle cx={vx} cy={vy} r={1.8} fill={color} />
+                    <text
+                      x={lx2.toFixed(1)}
+                      y={ly2.toFixed(1)}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={3.5}
+                      fill={color}
+                      fontFamily="monospace"
+                    >
+                      {siteswapLabel(b)}
+                    </text>
+                  </g>,
+                ];
+              }
+              seen.add(b);
+              return [];
+            });
+          })}
 
-        {arcTs.flatMap((t, i) => {
-          if (t === null) return [];
+        {Object.entries(nodePulses).map(([slotKey, { key, color, x, y }]) => (
+          <circle
+            key={`${slotKey}-${key}`}
+            cx={x}
+            cy={y}
+            r={2.5}
+            fill="none"
+            stroke={color}
+            strokeWidth={0.5}
+            className="node-pulse"
+          />
+        ))}
+
+        {arcTs.flatMap((arcEntry, i) => {
+          if (arcEntry === null) return [];
+          const { t, cycle } = arcEntry;
           const thr = animatorThrows[i];
           if (!thr) return [];
           const color = thr.side === "right" ? RING_RIGHT : RING_LEFT;
@@ -229,8 +390,9 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
           const tEased = throwEasing(t);
 
           if (isSelfLoop) {
-            const [bx, by] = beatPoint(thr.beat, n, r, cx, cy);
-            const beatAng = (-90 + thr.beat * (360 / n)) * (Math.PI / 180);
+            const beatAng = throwVertexAngle(thr, cycle, false);
+            const bx = cx + r * Math.cos(beatAng);
+            const by = cy + r * Math.sin(beatAng);
             const ox = bx - SELF_LOOP_R * Math.cos(beatAng);
             const oy = by - SELF_LOOP_R * Math.sin(beatAng);
             const sx = bx,
@@ -274,14 +436,15 @@ export default function FingerprintCard({ uid, rhythm, beats }: Props) {
             ];
           }
 
-          const { x1, y1, mx, my, x2, y2 } = chordParams(
-            thr.beat,
-            thr.value,
-            n,
-            r,
-            cx,
-            cy,
-          );
+          const ang1 = throwVertexAngle(thr, cycle, false);
+          const ang2 = throwVertexAngle(thr, cycle, true);
+          const x1 = cx + r * Math.cos(ang1);
+          const y1 = cy + r * Math.sin(ang1);
+          const x2 = cx + r * Math.cos(ang2);
+          const y2 = cy + r * Math.sin(ang2);
+          const bow = 0.16 + thr.value / 40;
+          const mx = cx + ((x1 + x2) / 2 - cx) * bow;
+          const my = cy + ((y1 + y2) / 2 - cy) * bow;
           const q0x = x1 + (mx - x1) * tEased,
             q0y = y1 + (my - y1) * tEased;
           const q1x = mx + (x2 - mx) * tEased,

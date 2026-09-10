@@ -36,11 +36,32 @@ export type Pattern = {
   beats: ApiBeat[];
 };
 
+// ── Generator params ─────────────────────────────────────────────────────────
+
+export type GeneratorParams = {
+  rhythm: Rhythm;
+  balls: number;
+  cycles: number;
+  groundLimit: number;
+  activeLimit: number;
+  mode: "ordered" | "sampled";
+  family: string;
+};
+
 // ── Filters ──────────────────────────────────────────────────────────────────
 
 export type FilterState = {
   balls: Set<string>;
-  family: Set<string>;
   state: Set<string>;
   cycles: Set<string>;
+};
+
+// ── Generation session ────────────────────────────────────────────────────────
+
+export type GenerationSession = {
+  id: string;
+  timestamp: number;
+  params: GeneratorParams[];
+  filters: FilterState;
+  patterns: Pattern[];
 };
